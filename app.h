@@ -12,6 +12,7 @@
 #define APP_SPLASH                       /* app_splash: the neon title, not the platform's page */
 #define APP_BLOCK 256u                   /* frames per audio block: 5.8 ms at 44.1 kHz (a drone: no hurry) */
 #define APP_OVERLOAD                     /* app_overload: the render over 90 % of its time: a voice let go */
+#define APP_USB_HOST_NAME                /* LINK shows the name of what is connected */
 #define APP_TOUCH                        /* velocity from the keys (lib/touch.h): harder = brighter brass */
 
 /* the store: the app's settings and the panel calibration (the platform's) */

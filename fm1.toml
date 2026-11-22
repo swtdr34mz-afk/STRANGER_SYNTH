@@ -10,6 +10,7 @@ include = ["dsp"]
 vendored = ["fm1-base/"]          # fm1-base is a submodule inside the app: its own checks are its own
 words = "words.tsv"
 ble = false
+usb_host = true                   # LINK (SAVE): the USB port plays host to another FM-1 (SIX MACHINES) or a controller
 cpu2 = true                       # half the voices on the second core
 cpu2_fallback = true              # a unit whose second core fails: one core, no restart
 backup = true                     # backup and restore of the settings

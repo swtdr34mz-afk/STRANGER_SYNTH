@@ -40,6 +40,7 @@ jobs:
           build/host/stranger_synth_host tests/split.txt build/host
           build/host/stranger_synth_host tests/glide.txt build/host
           build/host/stranger_synth_host tests/perform.txt build/host
+          build/host/stranger_synth_host tests/link.txt build/host
           build/host/stranger_synth_host tests/arp.txt build/host
 
       - name: JieLi toolchain

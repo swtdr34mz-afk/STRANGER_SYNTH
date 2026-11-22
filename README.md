@@ -16,7 +16,7 @@ and [felucca-bsp](https://github.com/hugelton/felucca-bsp).
 4. CHORD mode with sidechain, TONE FOLLOW (to the low split or the chords) (done: v0.0.3)
 5. Performance FX: tape stop, VHS wobble, tape rewind, gated reverb, tape echo throw, lights out, walkie, riser (done: v0.0.3)
 6. The screen: a small town at night, the mirror world (done: v0.1.0)
-7. SIX MACHINES sends MIDI clock and its kick as the sidechain trigger
+7. SIX MACHINES sends MIDI clock and its kick as the sidechain trigger (done: v0.2.0, and SIX MACHINES' MIDI out)
 
 ## Build
 
@@ -53,3 +53,10 @@ GitHub Actions builds the `.fwsc` on every push (Actions > the run > Artifacts) 
   fireflies, arcade screens and sparks follow the notes; in the red storm the notes bring lightning.
 - **The MIRROR**: while PERFORM effects play, the picture turns over into a cold, dark copy of itself, red at the
   brightest, ash floating up, the tracking line rolling. All drawn here; no figures, logos or images from any film or show.
+
+## LINK: two FM-1s (v0.2.0)
+
+**SAVE** switches LINK on: STRANGER SYNTH's USB port plays host. Connect the FM-1 running SIX MACHINES to it (an OTG
+cable or adapter; the port gives no power, so the other FM-1 runs on its battery or through a powered hub). The header
+shows LNK (green: connected). SIX MACHINES' clock then drives the arp and the sidechain (START, STOP), and with
+SC RATE at KICK its kick ducks the sound. SAVE again: back to the computer (no computer while LINK is on).

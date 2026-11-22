@@ -1,0 +1,32 @@
+# STRANGER SYNTH: LINK (SAVE): the USB port plays host to SIX MACHINES; its clock drives the arp, its kick the sidechain
+wait 3200
+tapkey w0 100
+wait 400
+tap SAVE
+wait 50
+expect usbh 1
+usbh plug SIX_MACHINES_FM-1
+wait 400
+expect usbh 2
+# the arp on, its notes held; the clock comes from SIX MACHINES
+tap ARP
+key 4 down 100
+wait 50
+usbh midi FA 00 00
+usbh clock 30
+expect arp_ext 1
+# the sidechain on its kick
+tap ENV
+turn K3 60
+turn K4 6
+expect sc_rate 3
+usbh midi 99 24 7F
+wait 20
+expect sc_duck 1
+key 4 up
+usbh midi FC 00 00
+# LINK off: back to the computer
+tap ENV
+tap SAVE
+wait 50
+expect usbh 0

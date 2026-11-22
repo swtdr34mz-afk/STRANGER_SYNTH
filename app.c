@@ -17,6 +17,9 @@
  *   SEQ             LOW HOLD: the low split's notes stay (a new low note replaces them); the right hand plays free
  *   ARP             the ARPEGGIATOR on / off (with the split on it plays the low split, else every key);
  *                   held 1 s: EPIC (root, fifth and octave from one finger)
+ *   SAVE            LINK: the USB port plays host (another FM-1 with SIX MACHINES, a controller): its clock drives the
+ *                   arp and the sidechain, its kick (channel 10, note 36) ducks with SC RATE at KICK. Again: back to
+ *                   the computer
  *   LFO             the ARP page: RATE, PATTERN, OCTAVES, GATE; SELECT there: the tempo (BPM; MIDI clock in wins)
  *   REC held 1 s    every note let go
  * The melody: with the split on and FOLLOW on, the right hand plays in SCALE from the low split's note (the lowest
@@ -313,6 +316,7 @@ static struct {
     uint32_t rec_t, home_t, sel_t, arp_t, fx_t, rew_t;
     uint8_t fx_used;
     uint32_t fx;                         /* PERFORM: the effects on (FX_*) */
+    uint8_t link;                        /* LINK: the USB port plays host */
     uint8_t sel_used;
     uint32_t enc_at[NE];
     int32_t enc_acc[4];
@@ -1394,8 +1398,12 @@ static void input(void)
             octave(k == B_OCTUP ? 1 : -1);
         else if (k == B_REC)
             ui.rec_t = now;
-        else if (k == B_SAVE)
-            ui.save_t = now;
+        else if (k == B_SAVE) {          /* LINK: the USB port as host, or back to the computer */
+            ui.link = (uint8_t)!ui.link;
+            plat_usb_host(ui.link);
+            app_say("LINK", ui.link ? "LOOKING" : "OFF");
+            ui.head_redraw = 1;
+        }
         else if (k == B_FX) {
             ui.fx_t = now;
             ui.fx_used = 0;
@@ -1645,6 +1653,8 @@ static void draw_head(void)
     cv_text(110, 7, &FONT_XS, "LOW", ui.lowhold ? C_AMBER : RGB(60, 50, 50));
     cv_text(132, 7, &FONT_XS, "ARP", set.arp ? C_RED : RGB(60, 40, 40));
     cv_text(154, 7, &FONT_XS, "EPIC", set.epic ? C_MAG : RGB(60, 40, 55));
+    if (ui.link)                         /* LINK: lit when connected, dim while looking */
+        cv_text(182, 7, &FONT_XS, "LNK", plat_usb_host_state() == USBH_CONNECTED ? RGB(120, 255, 140) : RGB(60, 90, 60));
     t[0] = 'O';
     t[1] = 'C';
     t[2] = 'T';
@@ -1816,7 +1826,7 @@ static void draw_sheet(void)
     sheet_btn(178, 68, "EDIT", "GLIDE", ui.page == PG_GLIDE);
     sheet_btn(4, 94, "GLO", "PRESSURE", ui.page == PG_PRESS);
     sheet_btn(62, 94, "HOME", "MAIN", ui.page == PG_MAIN);
-    sheet_btn(120, 94, "FX+KEY", "EFFECT", ui.fx != 0);
+    sheet_btn(120, 94, "SAVE", "LINK USB", ui.link);
     sheet_btn(178, 94, "LFO", "ARP PAGE", ui.page == PG_ARP);
     cv_blit(0, 24);
     cv_begin(240, 96, C_BLACK);
@@ -2066,6 +2076,21 @@ void app_frame(void)
             eng_press(id + 200, (float)d2 / 127.0f);
         } else if ((st & 0xF0u) == 0xB0u && (d1 == 123u || d1 == 120u))
             eng_all_off();
+    }
+    {                                    /* LINK: what happened on the USB port */
+        int m = plat_usb_host_msg();
+        if (m == USBH_MSG_MIDI)
+            app_say("LINK", plat_usb_host_name()[0] ? plat_usb_host_name() : "CONNECTED");
+        else if (m == USBH_MSG_NOMIDI)
+            app_say("LINK", "NO MIDI THERE");
+        else if (m == USBH_MSG_LOST)
+            app_say("LINK", "LOST");
+        else if (m == USBH_MSG_LOW)
+            app_say("LINK", "NEEDS POWER");
+        if (m != USBH_MSG_NONE)
+            ui.head_redraw = 1;
+        if (plat_usb_lost())
+            eng_clock(CLK_STOP);         /* (the clock gone: the arp's own tempo again) */
     }
     if (ann_on() && ann_where()) {
         char t[64] = "STRANGER SYNTH. ";
