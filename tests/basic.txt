@@ -23,8 +23,8 @@ key w8 up
 wait 5000
 wavstop
 expect peak_db_min -28
-# DRONE: the chord stays, a deep root under it
-tap PLAY
+# HOLD (REC): the chord stays
+tap REC
 expect drone 1
 key w0 down 100
 key w4 down 100
@@ -33,14 +33,13 @@ key w0 up
 key w4 up
 wait 1500
 expect latched 129
-expect deep 41
-expect voices 3
+expect deep 0
+expect voices 2
 shot drone.png
 # a new chord replaces it
 tapkey w2 100
 wait 200
 expect latched 16
-expect deep 45
 # EPIC (ARP held 1 s): root, fifth and octave
 press ARP
 wait 1100
@@ -79,7 +78,7 @@ press REC
 wait 1100
 release REC
 expect latched 0
-tap PLAY
+tap REC
 expect drone 0
 wait 9000
 expect voices 0

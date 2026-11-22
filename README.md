@@ -41,9 +41,10 @@ GitHub Actions builds the `.fwsc` on every push (Actions > the run > Artifacts) 
   or every key with the split off; with ARP the arp plays the chord), K2 SPREAD (CLOSE, OPEN, WIDE), K3 SIDECHAIN depth,
   K4 SC RATE (1/4, 1/8, 1/2, KICK: a kick on MIDI channel 10, note 36).
 - **FOLLOW CHORD** (SEL page, FOLLOW): the right hand's white keys play the chord's notes.
-- **PERFORM** (FX tapped; or FX held + a key on any page): the lowest eight white keys switch the effects:
+- **PERFORM**: FX held + one of the lowest eight white keys switches an effect (while FX is held, the keys of the
+  effects that are on light up); FX tapped shows the PERFORM page (the keys play as always there). The effects:
   TAPE STOP, VHS, REWIND (once), GATED reverb, ECHO throw, LIGHTS OUT, WALKIE, RISER. The knobs stay the macros.
-- **REC** tapped: TAPE STOP (again: it spins back up). REC held 1 s: every note off.
+- **PLAY**: TAPE STOP (again: it spins back up). **REC**: HOLD (every note stays); REC held 1 s: every note off.
 
 ## The screen (v0.1.0)
 
@@ -60,3 +61,8 @@ GitHub Actions builds the `.fwsc` on every push (Actions > the run > Artifacts) 
 cable or adapter; the port gives no power, so the other FM-1 runs on its battery or through a powered hub). The header
 shows LNK (green: connected). SIX MACHINES' clock then drives the arp and the sidechain (START, STOP), and with
 SC RATE at KICK its kick ducks the sound. SAVE again: back to the computer (no computer while LINK is on).
+
+## v0.2.1
+
+- PLAY: TAPE STOP; REC: HOLD (no deep root under it); FX + key for the effects, their keys lit while FX is held.
+- No sounds from the screen any more (the crackle of the flickering lights); drier presets; STRANGER's own colours.

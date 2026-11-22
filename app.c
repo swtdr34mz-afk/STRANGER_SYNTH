@@ -13,7 +13,9 @@
  *   GLO             the PRESSURE page (again: MAIN)       HOME  MAIN; held 1 s: the preset's knobs as they came
  *   PRESET          the preset (each keeps its own knobs)
  *   SELECT          TONE              ALGORITHM  VIBRATO
- *   PLAY            DRONE: every note stays (a key with no key down on its side starts a new chord), a deep root
+ *   PLAY            TAPE STOP (again: it spins back up)
+ *   REC             HOLD: every note stays (a key with no key down on its side starts a new chord); held 1 s: all off
+ *   FX              the PERFORM page; FX held + one of the lowest eight white keys: an effect on / off (lit while held)
  *   SEQ             LOW HOLD: the low split's notes stay (a new low note replaces them); the right hand plays free
  *   ARP             the ARPEGGIATOR on / off (with the split on it plays the low split, else every key);
  *                   held 1 s: EPIC (root, fifth and octave from one finger)
@@ -71,9 +73,9 @@ static uint32_t dirty_at;
 #define DEEP_ID 999                      /* the drone's deep root */
 #define MIDI_ID 1100                     /* MIDI notes: 1100 + note (+100, +200: EPIC's fifth and octave) */
 
-#define C_CYAN RGB(60, 230, 255)
-#define C_MAG RGB(255, 60, 170)
-#define C_AMBER RGB(255, 170, 60)
+#define C_CYAN RGB(90, 220, 200)           /* (STRANGER's palette: a VHS teal, red, a warm white) */
+#define C_MAG RGB(255, 40, 60)
+#define C_AMBER RGB(255, 190, 150)
 #define C_FIRE RGB(255, 120, 30)
 #define C_RAIN RGB(110, 130, 168)
 #define C_RED RGB(255, 40, 40)
@@ -723,7 +725,7 @@ static void deep_update(void)
 {
     float want = 0.0f;
     uint32_t k;
-    if (ui.drone)
+    if (0)                               /* (STRANGER SYNTH: HOLD only holds, no deep root under it) */
         for (k = 0; k < NKEYS; k++)
             if ((ui.latched & ui.sounding) >> k & 1u) {
                 want = ui.kp[k] - 12.0f;
@@ -1343,7 +1345,7 @@ static void input(void)
             int v = touch_vel(k);
             if (v <= 0)
                 v = 100;
-            if (((btn >> B_FX & 1u) || ui.page == PG_PERF) && fx_pad(k) >= 0) {   /* the PERFORM pads */
+            if ((btn >> B_FX & 1u) && fx_pad(k) >= 0) {   /* FX held: the lowest white keys are the PERFORM pads */
                 fx_toggle((uint32_t)fx_pad(k));
                 ui.fx_used = 1;
             } else if (btn >> B_SEL & 1u) {     /* SEL held: the split here (this key the right's first) */
@@ -1380,10 +1382,8 @@ static void input(void)
             ui.redraw = ui.head_redraw = 1;
             continue;
         }
-        if (k == B_PLAY) {
-            ui.drone = (uint8_t)!ui.drone;
-            holds_changed();
-            app_say("DRONE", ui.drone ? "ON" : "OFF");
+        if (k == B_PLAY) {               /* PLAY: TAPE STOP (again: it spins back up) */
+            fx_toggle(FX_TAPESTOP);
         } else if (k == B_SEQ) {
             ui.lowhold = (uint8_t)!ui.lowhold;
             if (ui.lowhold && !set.split_oct) {   /* LOW HOLD needs the split: on, an octave down */
@@ -1475,7 +1475,9 @@ static void input(void)
     if (ui.rec_t) {
         if (!(btn >> B_REC & 1u)) {      /* a tap: MEMORY, the last seconds frozen / let go */
             ui.rec_t = 0;
-            fx_toggle(FX_TAPESTOP);      /* a tap: TAPE STOP (again: it spins back up) */
+            ui.drone = (uint8_t)!ui.drone;   /* a tap: HOLD, every note stays (a key with none down starts a new chord) */
+            holds_changed();
+            app_say("HOLD", ui.drone ? "ON" : "OFF");
         } else if (now - ui.rec_t >= 1000u) {
             ui.rec_t = 0;
             all_off();
@@ -1536,8 +1538,10 @@ static void input(void)
 static void lights(void)
 {
     uint32_t btn = 0, dimb;
+    if (ui.fx >> FX_TAPESTOP & 1u)
+        btn |= LED_PLAY_GREEN;           /* PLAY: the tape stopped */
     if (ui.drone)
-        btn |= LED_PLAY_GREEN;
+        btn |= 1u << B_REC;              /* REC: HOLD */
     if (ui.lowhold)
         btn |= 1u << B_SEQ;
     if (set.arp || set.epic)
@@ -1554,8 +1558,6 @@ static void lights(void)
         btn |= 1u << B_ENV;
     if (ui.page == PG_ARP)
         btn |= 1u << B_LFO;
-    if (ui.fx >> FX_TAPESTOP & 1u)
-        btn |= 1u << B_REC;
     if (set.octave < 0)
         btn |= 1u << B_OCTDN;
     if (set.octave > 0)
@@ -1585,6 +1587,17 @@ static void lights(void)
                     lit |= 1u << k;
                 else
                     mid |= 1u << k;
+            }
+        }
+        if (ui.btn >> B_FX & 1u) {       /* FX held: the pads, the effects on lit, the others dim */
+            uint32_t f;
+            static const uint8_t WK[16] = PLAT_WHITE_KEYS;
+            lit = dim = mid = 0;
+            for (f = 0; f < NFX; f++) {
+                if ((ui.fx >> f & 1u) || (f == FX_REWIND && ui.rew_t))
+                    lit |= 1u << WK[f];
+                else
+                    dim |= 1u << WK[f];
             }
         }
         plat_lights(btn | (ui.btn & ~(1u << B_PLAY)), lit, dimb, dim & ~lit, 1);
@@ -1649,7 +1662,7 @@ static void draw_head(void)
     x += text_w(&FONT_B, "STRAN");
     cv_text(x + 1, 5, &FONT_B, "GER", lit ? RGB(110, 10, 10) : C_BLACK);
     cv_text(x, 4, &FONT_B, "GER", lit ? C_RED : RGB(60, 20, 20));
-    cv_text(76, 7, &FONT_XS, "DRONE", ui.drone ? C_AMBER : RGB(60, 50, 50));
+    cv_text(80, 7, &FONT_XS, "HOLD", ui.drone ? C_AMBER : RGB(60, 50, 50));
     cv_text(110, 7, &FONT_XS, "LOW", ui.lowhold ? C_AMBER : RGB(60, 50, 50));
     cv_text(132, 7, &FONT_XS, "ARP", set.arp ? C_RED : RGB(60, 40, 40));
     cv_text(154, 7, &FONT_XS, "EPIC", set.epic ? C_MAG : RGB(60, 40, 55));
@@ -1820,7 +1833,7 @@ static void draw_sheet(void)
         cv_text(x + 11, 54, &FONT_XS, KN[ui.page][i], C_CYAN);
     }
     cv_rect(0, 66, 240, 1, RGB(60, 20, 60));
-    sheet_btn(4, 68, "FX", "PERFORM", ui.page == PG_PERF);
+    sheet_btn(4, 68, "FX+KEY", "EFFECT", ui.page == PG_PERF || ui.fx);
     sheet_btn(62, 68, "SEL", "SPLIT", ui.page == PG_SPLIT);
     sheet_btn(120, 68, "ENV", "CHORD", ui.page == PG_CHORD);
     sheet_btn(178, 68, "EDIT", "GLIDE", ui.page == PG_GLIDE);
@@ -1830,10 +1843,10 @@ static void draw_sheet(void)
     sheet_btn(178, 94, "LFO", "ARP PAGE", ui.page == PG_ARP);
     cv_blit(0, 24);
     cv_begin(240, 96, C_BLACK);
-    sheet_btn(4, 2, "PLAY", "DRONE", ui.drone);
+    sheet_btn(4, 2, "PLAY", "TAPE STOP", ui.fx >> FX_TAPESTOP & 1u);
     sheet_btn(62, 2, "SEQ", "LOW HOLD", ui.lowhold);
     sheet_btn(120, 2, "ARP", "ARP/EPIC", set.arp);
-    sheet_btn(178, 2, "REC", "TAPE STOP", ui.fx >> FX_TAPESTOP & 1u);
+    sheet_btn(178, 2, "REC", "HOLD", ui.drone);
     sheet_btn(4, 30, "OCT-/+", "OCTAVE", set.octave != 0);
     sheet_btn(62, 30, "REC 1s", "ALL OFF", 0);
     sheet_btn(120, 30, "HOME 1s", "RESET", 0);

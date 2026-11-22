@@ -52,6 +52,12 @@ tap ENV
 # PERFORM: FX, the lowest white keys are the pads
 tap FX
 expect page 4
+# on the page the keys still play; FX held: the lowest white keys are the pads
+key 0 down 100
+wait 30
+key 0 up
+expect fx 0
+press FX
 key 14 down 100
 wait 100
 key 0 down 100
@@ -84,12 +90,12 @@ wait 30
 key 6 up
 expect fx 10
 wait 500
-shot perform.png
 key 14 up
-# REC: TAPE STOP
-tap FX
-tap REC
+release FX
+shot perform.png
+# PLAY: TAPE STOP
+tap PLAY
 expect fx 11
 wait 600
-tap REC
+tap PLAY
 expect fx 10

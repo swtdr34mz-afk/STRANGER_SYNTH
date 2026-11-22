@@ -634,11 +634,8 @@ static void film_step(void)              /* the movement, a frame */
     }
     if (film.flicker)
         film.flicker--;
-    else if (urand() % 200u == 0u) {
-        film.flicker = (uint8_t)(6u + urand() % 12u);
-        if (film.scene == SC_STREET || film.scene == SC_DOOR)   /* the lights buzz */
-            eng_sfx(SFX_ZAP, 0.0f, 0.0f);
-    }
+    else if (urand() % 200u == 0u)
+        film.flicker = (uint8_t)(6u + urand() % 12u);   /* (seen, not heard: no sounds from the film here) */
     film.frame++;
 }
 

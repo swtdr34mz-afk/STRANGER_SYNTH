@@ -24,25 +24,25 @@ const macro_t MACROS[4] = {
  * (SHAPE, DRIFT, SPACE, FILTER). Each in the manner of a classic 80s analogue: the names are our own. */
 const preset_t PRESETS[NPRESETS] = {
     /* the night's sequence: saw and pulse, a resonant filter that snaps shut; made for the arp */
-    {"NIGHT SEQUENCE", 0.0f, 1, 0.62f, 0.80f, 0.25f, 220.0f, 4.4f, 0.42f, 0.70f, {0, 30, 45, 40}},
+    {"NIGHT SEQUENCE", 0.0f, 1, 0.62f, 0.80f, 0.25f, 220.0f, 4.4f, 0.42f, 0.70f, {0, 30, 27, 40}},
     /* a five-voice poly brass: two saws a little apart, the filter swelling open */
-    {"FIVE BRASS", 0.0f, 0, 0.50f, 1.00f, 0.30f, 300.0f, 4.2f, 0.22f, 0.60f, {55, 40, 55, 60}},
+    {"FIVE BRASS", 0.0f, 0, 0.50f, 1.00f, 0.30f, 300.0f, 4.2f, 0.22f, 0.60f, {55, 40, 33, 60}},
     /* the 106's strings: one pulse wide open, its chorus (ENSEMBLE) doing the rest */
-    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 70, 55}},
+    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}},
     /* the model D's bass: two saws an octave apart, the sub, a fat ladder filter */
-    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 15, 40}},
+    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}},
     /* the OB's brass: wide, bright, a little wild */
-    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 55, 70}},
+    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}},
     /* the Prophet-6's pad: saw and a fifth above in pulse, slow and wide */
-    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 95, 50}},
+    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}},
     /* the 101's arp bass: one pulse and the sub, squelchy */
-    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 20, 35}},
+    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}},
     /* a lead an octave up, the resonance high: it cuts through */
-    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.10f, 450.0f, 3.5f, 0.55f, 0.75f, {40, 35, 60, 85}},
+    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.10f, 450.0f, 3.5f, 0.55f, 0.75f, {40, 35, 36, 85}},
     /* a choir from tape: hollow pulses, slow, far away */
-    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 110, 45}},
+    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}},
     /* the dark below: a fifth under, a slow growl (OFFWORLD's brass, from the other side) */
-    {"THE DARK BELOW", -5.0f, 0, 0.50f, 0.90f, 0.60f, 120.0f, 3.6f, 0.35f, 0.50f, {90, 105, 115, 25}},
+    {"THE DARK BELOW", -5.0f, 0, 0.50f, 0.90f, 0.60f, 120.0f, 3.6f, 0.35f, 0.50f, {90, 105, 69, 25}},
 };
 
 /* a curve: breakpoints (x 0..127, y), x rising, straight lines between them */
