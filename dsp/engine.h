@@ -35,7 +35,7 @@ extern const macro_t MACROS[4];          /* K1 SHAPE, K2 DRIFT, K3 SPACE, K4 FIL
 typedef struct {
     const char *name;
     float o2_semi;                       /* the second oscillator, semitones from the first (0, 7, 12, -12 ...) */
-    uint8_t o2_pulse;                    /* 1: the second is a pulse (hollow, reedy) */
+    uint8_t o2_pulse;                    /* 1: the second is a pulse (hollow, reedy); 2: a sine */
     float pw;                            /* its width 0.5 .. 0.9 */
     float o2_lvl, sub;                   /* the second's level, the sub's */
     float cut_hz;                        /* the filter closed */
@@ -44,11 +44,14 @@ typedef struct {
     float bright;                        /* velocity's share in the opening, 0 .. 1 */
     uint8_t m[4];                        /* the macros it starts at */
     float ring, noise, pluck;            /* RING 0..1, NOISE 0..1, PLUCK 0..1 */
+    float sine;                          /* SINE: the first oscillator from a saw toward a sine, 0..1 */
+    int8_t arp;                          /* the arp it starts with (ARP_*), -1: as it is */
 } preset_t;
-#define NPRESETS 15
+#define NPRESETS 13
 extern const preset_t PRESETS[NPRESETS];
 
 void eng_init(void);
+void eng_size(float s);                  /* SIZE 0..1: chorus, width and room together (then eng_sound) */
 /* what pressing a key harder does */
 enum { PRESS_OFF, PRESS_FILTER, PRESS_SWELL, PRESS_POWER, PRESS_VIBRATO, NPRESS };
 /* the sound: the preset's timbre, the four macros, TONE -1..1 (the filter darker / brighter), VIBRATO 0..1,

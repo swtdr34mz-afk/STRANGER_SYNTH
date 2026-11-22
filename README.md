@@ -75,3 +75,12 @@ Seven new presets, tuned against reference recordings (their brightness, noise, 
 2.57 times up, hiss, tape grit), **CHAOS** (a grinding minor second, ring, warp), **END CREDITS** and **CREDITS RISE**
 (calm to drastic with FILTER: at SCREAM it drives). New in the engine: RING, NOISE and PLUCK per preset; FILTER at
 SCREAM drives. The arp's tempo starts at 84 BPM (1/16).
+
+## v0.4.0
+
+- **ALGORITHM: SIZE** (was VIBRATO): the sound bigger in one turn: the ensemble chorus, the stereo width, a little
+  detune, more and longer reverb, a touch of delay. (VIBRATO stays on the PRESSURE page, K4.)
+- **KIDS ON BIKES** the Juno-60 way (saw and pulse together, the square sub, chorus, long ring); **LAZY NIGHT** sour
+  (a tritone beside it, ring, wobble); **DARK BELLS** replace DIRTY BELLS (sines ringing out of tune, smooth, a canyon
+  of reverb); **FIVE BRASS** from below (an octave down, deeper, a cathedral); **MODEL BASS** starts on the arp
+  (UP-DOWN). END CREDITS and CREDITS RISE are gone: 13 presets.

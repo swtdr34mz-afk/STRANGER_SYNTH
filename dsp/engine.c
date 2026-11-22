@@ -26,35 +26,33 @@ const macro_t MACROS[4] = {
  * Each in the manner of a classic 80s analogue or a sound of the film scores of the time: the names are our own. */
 const preset_t PRESETS[NPRESETS] = {
     /* the theme's sequence: two saws a hair apart, the sub, a resonant filter nearly shut (FILTER opens it) */
-    {"THEME SEQUENCE", 0.0f, 0, 0.50f, 0.90f, 0.60f, 150.0f, 3.4f, 0.48f, 0.50f, {35, 40, 30, 20}, 0.0f, 0.0f, 0.0f},
-    /* kids on bikes: a bright pulse an octave up, wide chorus, a little air */
-    {"KIDS ON BIKES", 12.0f, 1, 0.60f, 0.70f, 0.20f, 2100.0f, 2.0f, 0.15f, 0.60f, {30, 85, 35, 85}, 0.0f, 0.06f, 0.35f},
-    /* a lazy night: plucks, detuned, dark, a secret */
-    {"LAZY NIGHT", 0.0f, 0, 0.50f, 1.00f, 0.35f, 260.0f, 2.6f, 0.30f, 0.60f, {16, 62, 30, 35}, 0.0f, 0.0f, 0.0f},
-    /* dirty bells: a sine ringing against a saw 2.57 times up (partials near 1.6, 3.6, 4.1), hiss, tape grit */
-    {"DIRTY BELLS", 16.35f, 0, 0.50f, 0.80f, 0.10f, 800.0f, 1.2f, 0.10f, 0.50f, {75, 110, 45, 60}, 0.75f, 0.10f, 1.0f},
+    {"THEME SEQUENCE", 0.0f, 0, 0.50f, 0.90f, 0.60f, 150.0f, 3.4f, 0.48f, 0.50f, {35, 40, 30, 20}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    /* kids on bikes, the Juno-60 way: one oscillator's saw and pulse together, the square sub an octave down, its
+     * chorus (ENSEMBLE), and the notes ringing out long */
+    {"KIDS ON BIKES", 0.0f, 1, 0.55f, 0.75f, 0.45f, 2200.0f, 1.8f, 0.18f, 0.55f, {55, 70, 45, 80}, 0.0f, 0.05f, 0.55f, 0.0f, -1},
+    /* a lazy night: plucks with a sour tritone beside them, wide apart, wobbling: dark and wrong */
+    {"LAZY NIGHT", 6.25f, 0, 0.50f, 0.55f, 0.35f, 300.0f, 2.4f, 0.32f, 0.60f, {18, 80, 35, 35}, 0.15f, 0.0f, 0.0f, 0.0f, -1},
+    /* bells in the dark: sines ringing against each other 3.46 apart (not quite in tune: uneasy), smooth, a canyon of
+     * reverb, each one dying away */
+    {"DARK BELLS", 21.5f, 2, 0.50f, 0.30f, 0.10f, 2400.0f, 0.4f, 0.05f, 0.40f, {62, 45, 118, 80}, 0.60f, 0.0f, 1.0f, 1.0f, -1},
     /* chaos: a minor second grinding, ringing, warped; it swells out of the dark */
-    {"CHAOS", 1.0f, 0, 0.50f, 0.90f, 0.70f, 240.0f, 2.2f, 0.50f, 0.40f, {100, 100, 60, 30}, 0.30f, 0.05f, 0.0f},
-    /* end credits: a cluster of detuned saws; FILTER from calm to drastic (at SCREAM it drives) */
-    {"END CREDITS", 0.0f, 0, 0.50f, 1.00f, 0.40f, 300.0f, 2.5f, 0.25f, 0.55f, {60, 95, 45, 50}, 0.0f, 0.0f, 0.0f},
-    /* credits rise: saw and a fifth, brass that breaks up as FILTER goes up */
-    {"CREDITS RISE", 7.0f, 0, 0.50f, 0.75f, 0.35f, 260.0f, 3.0f, 0.30f, 0.60f, {55, 70, 40, 35}, 0.0f, 0.03f, 0.0f},
-    /* a five-voice poly brass: two saws a little apart, the filter swelling open */
-    {"FIVE BRASS", 0.0f, 0, 0.50f, 1.00f, 0.30f, 300.0f, 4.2f, 0.22f, 0.60f, {55, 40, 33, 60}, 0.0f, 0.0f, 0.0f},
+    {"CHAOS", 1.0f, 0, 0.50f, 0.90f, 0.70f, 240.0f, 2.2f, 0.50f, 0.40f, {100, 100, 60, 30}, 0.30f, 0.05f, 0.0f, 0.0f, -1},
+    /* a five-voice poly brass from below: an octave down under it, slow, deep, a cathedral of reverb: horror */
+    {"FIVE BRASS", -12.0f, 0, 0.50f, 0.75f, 0.55f, 220.0f, 3.8f, 0.30f, 0.60f, {72, 60, 88, 45}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
     /* the 106's strings: one pulse wide open, its chorus (ENSEMBLE) doing the rest */
-    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}, 0.0f, 0.0f, 0.0f},
-    /* the model D's bass: two saws an octave apart, the sub, a fat ladder filter */
-    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}, 0.0f, 0.0f, 0.0f},
+    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    /* the model D's bass: two saws an octave apart, the sub, a fat ladder filter; it starts on the arp, up and down */
+    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN},
     /* the OB's brass: wide, bright, a little wild */
-    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}, 0.0f, 0.0f, 0.0f},
+    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
     /* the Prophet-6's pad: saw and a fifth above in pulse, slow and wide */
-    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f},
+    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
     /* the 101's arp bass: one pulse and the sub, squelchy */
-    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f},
+    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
     /* a lead an octave up, the resonance high: it cuts through */
-    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.10f, 450.0f, 3.5f, 0.55f, 0.75f, {40, 35, 36, 85}, 0.0f, 0.0f, 0.0f},
+    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.10f, 450.0f, 3.5f, 0.55f, 0.75f, {40, 35, 36, 85}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
     /* a choir from tape: hollow pulses, slow, far away */
-    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f},
+    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f, 0.0f, -1},
 };
 
 /* a curve: breakpoints (x 0..127, y), x rising, straight lines between them */
@@ -173,7 +171,7 @@ typedef struct {
     float hiss, drop_p, rumble, thunder_p;
     /* TONE and VIBRATO */
     float tone_mul, vib_c, cut_mul;
-    float ring, noise;                   /* RING, NOISE (the preset's) */
+    float ring, noise, sine;             /* RING, NOISE, SINE (the preset's) */
     /* PRESSURE: what pressing harder does (PRESS_*), how much 0..1 */
     uint8_t press;
     float pamt;
@@ -183,6 +181,8 @@ typedef struct {
 static prm_t P, T, P_next;
 static volatile uint32_t p_seq, p_took;
 
+static float size_amt;                   /* SIZE (ALGORITHM): chorus, width and room together */
+void eng_size(float s) { size_amt = fm_clampf(s, 0.0f, 1.0f); }
 void eng_sound(int preset, const uint8_t m[4], float tone, float vib, int press, float pamt)
 {
     const preset_t *pr = &PRESETS[(uint32_t)preset < NPRESETS ? preset : 0];
@@ -206,6 +206,7 @@ void eng_sound(int preset, const uint8_t m[4], float tone, float vib, int press,
     q->s_a = CURVE(SW_SA, sw) * (1.0f - pr->pluck);
     q->ring = pr->ring;
     q->noise = pr->noise;
+    q->sine = pr->sine;
     q->kr_a = kchunk(CURVE(SW_R, sw) / 4.6f);   /* the release heard about as long as asked (to -40 dB) */
     q->ka_f = kchunk(CURVE(SW_FA, sw) / 1.47f);
     q->kd_f = kchunk(CURVE(SW_FD, sw) / 3.0f);
@@ -232,6 +233,16 @@ void eng_sound(int preset, const uint8_t m[4], float tone, float vib, int press,
     q->vib_c = 28.0f * fm_clampf(vib, 0.0f, 1.0f);
     q->press = (uint8_t)((uint32_t)press < NPRESS ? press : 0);
     q->pamt = fm_clampf(pamt, 0.0f, 1.0f);
+    {                                    /* SIZE: the sound made bigger: the ensemble, the width, the room, a little detune */
+        float z = size_amt;
+        q->ens += (0.95f - q->ens) * z;
+        q->spread += (0.95f - q->spread) * z;
+        q->det_c += 9.0f * z;
+        q->wet += (0.62f - q->wet) * z * 0.8f;
+        q->size = fm_minf(2.4f, q->size * (1.0f + 0.7f * z));   /* (RV_MAXF) */
+        q->t60 *= 1.0f + 1.5f * z;
+        q->dsend += 0.12f * z;
+    }
     p_seq++;                             /* even: done */
 }
 
@@ -257,7 +268,7 @@ static void params_glide(void)
 #define G(f) c.f = P.f + (T.f - P.f) * a
     G(o2_semi); G(pw); G(o2_lvl); G(sub); G(cut_hz); G(env_oct); G(res_k); G(bright); G(det_c); G(rnd_c); G(ens); G(spread);
     G(wow_c); G(drive); G(size); G(t60); G(wet); G(damp_k); G(dsend); G(dfb); G(hiss); G(rumble); G(tone_mul);
-    G(vib_c); G(pamt); G(cut_mul); G(ring); G(noise);
+    G(vib_c); G(pamt); G(cut_mul); G(ring); G(noise); G(sine);
 #undef G
     P = c;
 }
@@ -922,9 +933,19 @@ static void voice_chunk(voice_t *v, int slot, float *L, float *R, float lfo, flo
         for (s = 0; s < CH; s++) {
         float o, x, v1, v2, v3, y, amp = (ea0 + dea * (float)(s + 1u)) * (vg0 + dvg * (float)(s + 1u));
         a1a += d[0]; a2a += d[1]; a3a += d[2]; a1b += d[3]; a2b += d[4]; a3b += d[5];
-        o = saw(v->p1, i1);
+        {                                /* the first: a saw, or toward a sine (SINE) */
+            float q = v->p1 < 0.5f ? v->p1 : v->p1 - 0.5f, sn = 16.0f * q * (0.5f - q);
+            o = saw(v->p1, i1);
+            if (P.sine > 0.001f)
+                o += P.sine * ((v->p1 < 0.5f ? sn : -sn) - o);
+        }
         {
-            float o2 = P.o2_pulse ? 0.5f * pulse(v->p2, i2, P.pw) : saw(v->p2, i2);
+            float o2;
+            if (P.o2_pulse == 2u) {      /* the second as a sine */
+                float q = v->p2 < 0.5f ? v->p2 : v->p2 - 0.5f, sn = 16.0f * q * (0.5f - q);
+                o2 = v->p2 < 0.5f ? sn : -sn;
+            } else
+                o2 = P.o2_pulse ? 0.5f * pulse(v->p2, i2, P.pw) : saw(v->p2, i2);
             o += P.o2_lvl * o2;
             if (P.ring > 0.001f) {       /* RING: a sine on the first times the second */
                 float q = v->p1 < 0.5f ? v->p1 : v->p1 - 0.5f, sn = 16.0f * q * (0.5f - q);

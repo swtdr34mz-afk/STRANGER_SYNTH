@@ -12,7 +12,7 @@
  *   SEL             the SPLIT page (again: MAIN); held + a key: the split there
  *   GLO             the PRESSURE page (again: MAIN)       HOME  MAIN; held 1 s: the preset's knobs as they came
  *   PRESET          the preset (each keeps its own knobs)
- *   SELECT          TONE              ALGORITHM  VIBRATO
+ *   SELECT          TONE              ALGORITHM  SIZE (chorus, width, room: bigger)
  *   PLAY            TAPE STOP (again: it spins back up)
  *   REC             HOLD: every note stays (a key with no key down on its side starts a new chord); held 1 s: all off
  *   FX              the PERFORM page; FX held + one of the lowest eight white keys: an effect on / off (lit while held)
@@ -30,7 +30,7 @@
 #include "fastmath.h"
 #include "engine.h"
 
-#define SET_MAGIC 0x34595353u            /* "SSY4": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
+#define SET_MAGIC 0x35595353u            /* "SSY5": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
 #define NCUE 8
 #define CUE_NOTES 6
 typedef struct {
@@ -63,7 +63,8 @@ typedef struct {
     uint8_t bpm;                         /* its own tempo 40 .. 240 */
     uint8_t chord, spread;               /* CHORD: CHORDS (0 off), its voicing SP_* */
     uint8_t sc_depth, sc_rate;           /* the SIDECHAIN: 0..100 %, SC_* */
-    uint8_t rsv[2];
+    uint8_t size;                        /* SIZE (ALGORITHM): 0..100 */
+    uint8_t rsv[1];
 } settings_t;
 
 static settings_t set;
@@ -176,6 +177,7 @@ static void settings_defaults(void)
     set.spread = 0;
     set.sc_depth = 0;
     set.sc_rate = SC_4;
+    set.size = 30;
     set.city = 0;                        /* (OFFWORLD's city sounds: not here) */
 }
 
@@ -203,7 +205,7 @@ static int settings_ok(void)
            set.cue_hold <= 60u && set.cue_auto <= 1u && cues_ok() && set.arp <= 1u && set.arp_rate < NRATE &&
            set.arp_pat < NARPPAT && set.arp_oct >= 1u && set.arp_oct <= 4u && set.arp_gate >= 5u && set.arp_gate <= 100u &&
            set.bpm >= 40u && set.bpm <= 240u && set.chord < NCHORD && set.spread < NSPREAD &&
-           set.sc_depth <= 100u && set.sc_rate < NSC;
+           set.sc_depth <= 100u && set.sc_rate < NSC && set.size <= 100u;
 }
 
 static void settings_load(void)
@@ -319,6 +321,7 @@ static struct {
     uint8_t fx_used;
     uint32_t fx;                         /* PERFORM: the effects on (FX_*) */
     uint8_t link;                        /* LINK: the USB port plays host */
+    uint8_t arp_auto;                    /* the arp was switched on by a preset */
     uint8_t sel_used;
     uint32_t enc_at[NE];
     int32_t enc_acc[4];
@@ -854,6 +857,7 @@ static void replay_end(uint32_t held)
 static void arp_toggle(void)
 {
     uint32_t held = replay_begin();
+    ui.arp_auto = 0;
     set.arp = (uint8_t)!set.arp;
     arp_cfg();
     replay_end(held);
@@ -1037,6 +1041,7 @@ static void sound(void)
     m[2] = KM[2];
     m[3] = KM[3];                        /* FILTER */
     ui.rain_now = 0;                     /* (no rain on this side) */
+    eng_size((float)set.size / 100.0f);
     eng_sound(set.preset, m, (float)set.tone / 50.0f, (float)set.vib / 100.0f, set.press, (float)set.pamt / 100.0f);
 }
 
@@ -1289,6 +1294,16 @@ static void knob(int k, int32_t e)
 static void preset_load(int32_t d)
 {
     set.preset = (uint8_t)(((int32_t)set.preset + d % NPRESETS + NPRESETS) % NPRESETS);
+    if (PR.arp >= 0 && (!set.arp || set.arp_pat != (uint8_t)PR.arp)) {   /* a preset that starts on the arp */
+        set.arp_pat = (uint8_t)PR.arp;
+        if (!set.arp)
+            arp_toggle();
+        arp_cfg();
+        ui.arp_auto = 1;
+    } else if (PR.arp < 0 && ui.arp_auto && set.arp) {   /* (the arp it brought goes with it) */
+        arp_toggle();
+        ui.arp_auto = 0;
+    }
     knobs_from_settings();
     sound();
     dirty();
@@ -1519,14 +1534,14 @@ static void input(void)
         signed_text(set.tone, t);
         app_say("TONE", t);
     }
-    if ((e = plat_enc(EN_ALGO)) != 0) {
+    if ((e = plat_enc(EN_ALGO)) != 0) {   /* ALGORITHM: SIZE, the sound bigger (chorus, width, room) */
         char t[8];
-        set.vib = (uint8_t)clamp((int32_t)set.vib + accel(EN_ALGO, e, 2, 4), 0, 100);
+        set.size = (uint8_t)clamp((int32_t)set.size + accel(EN_ALGO, e, 2, 4), 0, 100);
         sound();
         dirty();
-        int_text(set.vib, t);
+        int_text(set.size, t);
         text_cat(t, "%");
-        app_say("VIBRATO", t);
+        app_say("SIZE", t);
     }
     if ((e = plat_enc(EN_PRESET)) != 0)
         preset_load(e > 0 ? 1 : -1);
@@ -1797,7 +1812,7 @@ static void draw_sheet(void)
     cv_text(4, 2, &FONT_B, "// CONTROLS", C_MAG);
     cv_text(158, 6, &FONT_XS, "BUTTON: BACK", RGB(110, 100, 130));
     for (i = 0; i < 3u; i++) {           /* the three encoders */
-        static const char *const EN[3] = {"SELECT", "ALGO", "PRESET"}, *const ED[3] = {"TONE", "VIBRATO", "PRESET"};
+        static const char *const EN[3] = {"SELECT", "ALGO", "PRESET"}, *const ED[3] = {"TONE", "SIZE", "PRESET"};
         int32_t x = 4 + (int32_t)i * 79;
         cv_rect(x, 21, 8, 8, RGB(70, 70, 90));
         cv_text(x + 11, 19, &FONT_XS, EN[i], RGB(150, 140, 170));
@@ -2199,6 +2214,8 @@ int app_expect(const char *what, int *got)
         *got = set.arp_rate;
     else if (!strcmp(what, "arp_pat"))
         *got = set.arp_pat;
+    else if (!strcmp(what, "size"))
+        *got = set.size;
     else if (!strcmp(what, "bpm"))
         *got = set.bpm;
     else if (!strcmp(what, "chord"))

@@ -134,3 +134,15 @@ expect epic 1
 expect arp 1
 tap ARP
 expect arp 0
+# MODEL BASS starts on the arp, UP-DOWN; the next preset lets it go
+turn PRESET 7
+wait 100
+expect preset 7
+expect arp 1
+expect arp_pat 2
+turn PRESET 1
+wait 100
+expect arp 0
+# ALGORITHM: SIZE
+turn ALGO 10
+expect size 40
