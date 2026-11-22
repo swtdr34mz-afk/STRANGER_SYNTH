@@ -30,7 +30,7 @@
 #include "fastmath.h"
 #include "engine.h"
 
-#define SET_MAGIC 0x33595353u            /* "SSY3": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
+#define SET_MAGIC 0x34595353u            /* "SSY4": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
 #define NCUE 8
 #define CUE_NOTES 6
 typedef struct {
@@ -171,7 +171,7 @@ static void settings_defaults(void)
     set.arp_pat = ARP_UP;
     set.arp_oct = 1;
     set.arp_gate = 50;
-    set.bpm = 110;
+    set.bpm = 84;                        /* the theme's tempo (1/16: 0.18 s a step) */
     set.chord = 0;
     set.spread = 0;
     set.sc_depth = 0;

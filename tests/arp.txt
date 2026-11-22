@@ -2,7 +2,7 @@
 wait 3200
 tapkey w0 100
 wait 400
-# ARP on: every key (the split is off), 1/16 at 110 BPM: a step every 136 ms, UP
+# ARP on: every key (the split is off), 1/16 at 84 BPM: a step every 179 ms, UP
 tap ARP
 expect arp 1
 wav arp.wav
@@ -10,9 +10,9 @@ key 0 down 100
 key 4 down 100
 wait 60
 expect arp_pitch 53
-wait 136
+wait 178
 expect arp_pitch 57
-wait 136
+wait 178
 expect arp_pitch 53
 expect voices_max_ok 1
 key 0 up

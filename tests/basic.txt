@@ -5,8 +5,8 @@ wait 900
 shot intro.png
 expect intro 1
 expect preset 0
-expect m1 0
-expect zone1 0
+expect m1 35
+expect zone3 -1
 # a key ends the intro and plays: the night's sequence
 wav brass.wav
 key w4 down 110
@@ -49,7 +49,7 @@ tapkey w9 100
 wait 200
 expect latched 65536
 # K4 slowly to BRIGHT: the filter opens
-turn K4 70 90
+turn K4 90 90
 wait 300
 expect zone4 3
 expect m4 100
@@ -67,7 +67,7 @@ shot freeze.png
 turn PRESET 1
 wait 100
 expect preset 1
-expect m1 55
+expect m1 30
 shot preset.png
 turn PRESET -1
 wait 100

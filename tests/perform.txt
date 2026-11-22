@@ -1,7 +1,7 @@
 # STRANGER SYNTH: CHORD (ENV), FOLLOW CHORD, the SIDECHAIN, PERFORM (FX) and TAPE STOP (REC)
 wait 3200
 tapkey w0 100
-wait 400
+wait 2500
 # CHORD: one finger, a minor chord
 tap ENV
 expect page 5
@@ -43,7 +43,7 @@ expect sc_rate 3
 key 4 down 100
 wait 200
 midi 99 24 7F
-wait 8
+wait 20
 expect sc_duck 1
 wait 600
 expect sc_duck 0

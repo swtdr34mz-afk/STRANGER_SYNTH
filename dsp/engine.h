@@ -43,8 +43,9 @@ typedef struct {
     float res;                           /* resonance 0 .. 0.9 */
     float bright;                        /* velocity's share in the opening, 0 .. 1 */
     uint8_t m[4];                        /* the macros it starts at */
+    float ring, noise, pluck;            /* RING 0..1, NOISE 0..1, PLUCK 0..1 */
 } preset_t;
-#define NPRESETS 10
+#define NPRESETS 15
 extern const preset_t PRESETS[NPRESETS];
 
 void eng_init(void);

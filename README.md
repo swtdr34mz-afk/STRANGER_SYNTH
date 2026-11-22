@@ -66,3 +66,12 @@ SC RATE at KICK its kick ducks the sound. SAVE again: back to the computer (no c
 
 - PLAY: TAPE STOP; REC: HOLD (no deep root under it); FX + key for the effects, their keys lit while FX is held.
 - No sounds from the screen any more (the crackle of the flickering lights); drier presets; STRANGER's own colours.
+
+## v0.3.0: the sounds of the scores
+
+Seven new presets, tuned against reference recordings (their brightness, noise, decay, partials, stereo width):
+**THEME SEQUENCE** (two saws and the sub under a resonant filter nearly shut: FILTER opens it), **KIDS ON BIKES**
+(bright pulse, wide chorus, air), **LAZY NIGHT** (dark detuned plucks), **DIRTY BELLS** (a ringing sine against a saw
+2.57 times up, hiss, tape grit), **CHAOS** (a grinding minor second, ring, warp), **END CREDITS** and **CREDITS RISE**
+(calm to drastic with FILTER: at SCREAM it drives). New in the engine: RING, NOISE and PLUCK per preset; FILTER at
+SCREAM drives. The arp's tempo starts at 84 BPM (1/16).
