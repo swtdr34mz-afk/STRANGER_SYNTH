@@ -1859,8 +1859,6 @@ static void draw_sheet(void)
  * the title buzzes on letter by letter like red neon tubes, SYNTH under it; lightning; the name. Drawn in two
  * bands (the canvas holds 144 rows), each from the same picture in screen rows. */
 #define INTRO_MS 4200u
-static const char *const BOOT[4] = {"> POWER .......... OK", "> TAPE ........... LOADED", "> CHANNEL 3 ...... TUNED",
-                                    "> SIGNAL ......... STRANGE"};
 
 static void intro_band(int32_t y0, int32_t h, uint32_t ms)
 {
@@ -1934,21 +1932,6 @@ static void intro_band(int32_t y0, int32_t h, uint32_t ms)
         }
     }
     if (y0 == 0) {
-        /* the VCR waking up */
-        for (i = 0; i < 4u; i++) {
-            uint32_t t0 = 80u + i * 260u, n;
-            char t[32];
-            uint32_t k;
-            if (ms < t0)
-                break;
-            n = (ms - t0) / 14u;
-            for (k = 0; k < 31u && BOOT[i][k] && k < n; k++)
-                t[k] = BOOT[i][k];
-            t[k] = 0;
-            cv_text(4, 4 + (int32_t)i * 12, &FONT_XS, t,
-                    ms > 1700u ? mix565(RGB(120, 255, 140), C_BLACK, (ms - 1700u) / 4u > 230u ? 230u : (ms - 1700u) / 4u)
-                               : RGB(120, 255, 140));
-        }
         /* the title: red neon, each letter buzzing on, a glow round it */
         if (ms > 1700u) {
             static const char *const T = "STRANGER";
@@ -2032,19 +2015,18 @@ void app_overload(void) { eng_shed(); }
 void app_splash(void)
 {
     lcd_fill(0, 0, 240, 240, C_BLACK);
-    draw_intro(INTRO_MS - 200u);
+    draw_intro(2900u);                   /* the title lit: the intro goes on from here (app_ui_init) */
 }
 
 void app_ui_init(void)
 {
     touch_on(1);
-    lcd_fill(0, 0, 240, 240, C_BLACK);
     ui.rnd = 0x51ED270Bu;
     film_init();
     ui.zone_k = -1;
     ui.redraw = ui.head_redraw = 1;
     ui.intro = 1;
-    ui.intro_t0 = plat_ms();
+    ui.intro_t0 = plat_ms() - 2900u;     /* from the title the boot showed (app_splash): no dark gap, the bolt, the name */
 }
 
 void app_frame(void)
