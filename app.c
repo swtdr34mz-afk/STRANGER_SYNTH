@@ -1565,30 +1565,8 @@ static void lights(void)
     dimb = (1u << B_PLAY) | (1u << B_ARP) | (1u << B_SEQ) | (1u << B_SEL) | (1u << B_GLO) | (1u << B_EDIT) | (1u << B_FX) | (1u << B_ENV) | (1u << B_SAVE) | (1u << B_OCTDN) |
            (1u << B_OCTUP) | (1u << B_REC) | (1u << B_HOME);
     {
-        /* the keys: what sounds bright; with FOLLOW the scale's keys half lit, its roots bright; the low split glowing */
-        uint32_t lit = ui.sounding | ui.keys, mid = 0, dim = side_mask(SIDE_L), k;
-        if (split_on() && set.follow != FOLLOW_OFF) {
-            const scale_t *sc = &SCALES[set.scale % NSCALE];
-            for (k = set.split_key; k < NKEYS; k++) {
-                float p;
-                int32_t rel, i, in = 0;
-                if (set.follow == FOLLOW_WHITE) {
-                    if (!key_pitch(k, &p))
-                        continue;
-                } else
-                    p = 53.0f + (float)k + 12.0f * (float)set.octave;
-                rel = (((int32_t)p - (int32_t)ui.root) % 12 + 12) % 12;
-                for (i = 0; i < sc->n; i++)
-                    if (sc->st[i] == rel)
-                        in = 1;
-                if (!in)
-                    continue;
-                if (rel == 0)
-                    lit |= 1u << k;
-                else
-                    mid |= 1u << k;
-            }
-        }
+        /* the keys: what sounds bright; the low split's keys glowing softly (how far it goes) */
+        uint32_t lit = ui.sounding | ui.keys, mid = 0, dim = side_mask(SIDE_L);
         if (ui.btn >> B_FX & 1u) {       /* FX held: the pads, the effects on lit, the others dim */
             uint32_t f;
             static const uint8_t WK[16] = PLAT_WHITE_KEYS;
