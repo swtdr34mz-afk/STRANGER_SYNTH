@@ -665,6 +665,8 @@ static void film_frame(uint32_t now)
     }
     if (film.flicker && film.scene != SC_STORM && (film.frame & 2u))   /* the power dips */
         px_tint(120, 90, C_BLACK);
+    if (set.heart && eng_heart_env() > 0.2f)                            /* the heart: the picture pulses red */
+        px_tint(120, (uint32_t)(eng_heart_env() * 70.0f), RGB(120, 0, 0));
     if (film.flash >= 4u || film.flash == 2u)                           /* red lightning */
         px_tint(GROUND, film.flash >= 4u ? 140u : 60u, RGB(255, 170, 150));
     if (film.flash >= 3u)

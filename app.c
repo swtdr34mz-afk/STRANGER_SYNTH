@@ -22,6 +22,8 @@
  *   SAVE            LINK: the USB port plays host (another FM-1 with SIX MACHINES, a controller): its clock drives the
  *                   arp and the sidechain, its kick (channel 10, note 36) ducks with SC RATE at KICK. Again: back to
  *                   the computer
+ *   EDIT            the HEART page (a heartbeat as the groove: level, SINGLE / DOUBLE / SLOW / RACING, REAL, DECAY);
+ *                   again: GLIDE; again: MAIN
  *   LFO             the ARP page: RATE, PATTERN, OCTAVES, GATE; SELECT there: the tempo (BPM; MIDI clock in wins)
  *   REC held 1 s    every note let go
  * The melody: with the split on and FOLLOW on, the right hand plays in SCALE from the low split's note (the lowest
@@ -30,7 +32,7 @@
 #include "fastmath.h"
 #include "engine.h"
 
-#define SET_MAGIC 0x35595353u            /* "SSY5": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
+#define SET_MAGIC 0x36595353u            /* "SSY6": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
 #define NCUE 8
 #define CUE_NOTES 6
 typedef struct {
@@ -64,6 +66,7 @@ typedef struct {
     uint8_t chord, spread;               /* CHORD: CHORDS (0 off), its voicing SP_* */
     uint8_t sc_depth, sc_rate;           /* the SIDECHAIN: 0..100 %, SC_* */
     uint8_t size;                        /* SIZE (ALGORITHM): 0..100 */
+    uint8_t heart, heart_pat, heart_real, heart_dec;   /* the HEART: level 0..100 (0 off), HB_*, REAL, DECAY */
     uint8_t rsv[1];
 } settings_t;
 
@@ -112,7 +115,7 @@ static const chord_t CHORDS[] = {
 #define NCHORD (sizeof CHORDS / sizeof CHORDS[0])
 enum { SP_CLOSE, SP_OPEN, SP_WIDE, NSPREAD };
 static const char *const SPREAD_NAME[NSPREAD] = {"CLOSE", "OPEN", "WIDE"};
-static const char *const SCR_NAME[NSC] = {"1/4", "1/8", "1/2", "KICK"};
+static const char *const SCR_NAME[NSC] = {"1/4", "1/8", "1/2", "KICK", "HEART"};
 /* the PERFORM effects, as the pads show them */
 static const char *const FX_NAME[NFX] = {"TAPE STOP", "VHS", "REWIND", "GATED", "ECHO", "LIGHTS OUT", "WALKIE", "RISER"};
 static const char *const FX_SHORT[NFX] = {"STOP", "VHS", "REW", "GATE", "ECHO", "DARK", "TALK", "RISE"};
@@ -178,6 +181,12 @@ static void settings_defaults(void)
     set.sc_depth = 0;
     set.sc_rate = SC_4;
     set.size = 30;
+    set.heart = 0;
+    set.heart_pat = HB_DOUBLE;
+    set.heart_real = 60;
+    set.heart_dec = 50;
+    set.arp = 1;                         /* THEME SEQUENCE starts on its arp, UP-DOWN */
+    set.arp_pat = ARP_UPDOWN;
     set.city = 0;                        /* (OFFWORLD's city sounds: not here) */
 }
 
@@ -205,7 +214,8 @@ static int settings_ok(void)
            set.cue_hold <= 60u && set.cue_auto <= 1u && cues_ok() && set.arp <= 1u && set.arp_rate < NRATE &&
            set.arp_pat < NARPPAT && set.arp_oct >= 1u && set.arp_oct <= 4u && set.arp_gate >= 5u && set.arp_gate <= 100u &&
            set.bpm >= 40u && set.bpm <= 240u && set.chord < NCHORD && set.spread < NSPREAD &&
-           set.sc_depth <= 100u && set.sc_rate < NSC && set.size <= 100u;
+           set.sc_depth <= 100u && set.sc_rate < NSC && set.size <= 100u &&
+           set.heart <= 100u && set.heart_pat < NHB && set.heart_real <= 100u && set.heart_dec <= 100u;
 }
 
 static void settings_load(void)
@@ -301,7 +311,7 @@ static void knobs_from_settings(void)
 }
 
 /* ---------------------------------------------------------------------- UI --- */
-enum { PG_MAIN, PG_SPLIT, PG_PRESS, PG_GLIDE, PG_PERF, PG_CHORD, PG_ARP, NPAGE };
+enum { PG_MAIN, PG_SPLIT, PG_PRESS, PG_GLIDE, PG_PERF, PG_CHORD, PG_ARP, PG_HEART, NPAGE };
 enum { SIDE_L, SIDE_R };
 static struct {
     char msg[2][24];
@@ -546,6 +556,10 @@ static int key_pitch(uint32_t k, float *p)
  * their own; what they hold (pressed, or staying with LOW HOLD / DRONE) goes to the engine, which plays it */
 static int arp_side(int side) { return set.arp && (!split_on() || side == SIDE_L); }
 static int arp_key(uint32_t k) { return arp_side(side_of(k)); }
+static void heart_cfg(void)
+{
+    eng_heart((float)set.heart / 100.0f, set.heart_pat, (float)set.heart_real / 100.0f, (float)set.heart_dec / 100.0f);
+}
 static void arp_cfg(void)
 {
     eng_arp(set.arp, set.arp_rate, set.arp_pat, set.arp_oct, (float)set.arp_gate / 100.0f, (float)set.bpm);
@@ -728,9 +742,9 @@ static void deep_update(void)
 {
     float want = 0.0f;
     uint32_t k;
-    if (0)                               /* (STRANGER SYNTH: HOLD only holds, no deep root under it) */
+    if (PR.deep && set.arp)              /* the preset's deep root under the arp: an octave under its lowest note */
         for (k = 0; k < NKEYS; k++)
-            if ((ui.latched & ui.sounding) >> k & 1u) {
+            if ((ui.sounding >> k & 1u) && arp_key(k)) {
                 want = ui.kp[k] - 12.0f;
                 break;
             }
@@ -1052,15 +1066,17 @@ static void weather(void)                /* the night moves on: the rain with it
 
 /* ------------------------------------------------------------------ pages --- */
 /* the knobs of SPLIT and PRESSURE: a value, its range, its text */
-static const char *const PAGE_NAME[NPAGE] = {"MAIN", "SPLIT", "PRESSURE", "GLIDE", "PERFORM", "CHORD", "ARP"};
+static const char *const PAGE_NAME[NPAGE] = {"MAIN", "SPLIT", "PRESSURE", "GLIDE", "PERFORM", "CHORD", "ARP", "HEART"};
+static const char *const HB_NAME[NHB] = {"SINGLE", "DOUBLE", "SLOW", "RACING"};
 static const char *const RATE_NAME[NRATE] = {"1/4", "1/8", "1/8T", "1/16", "1/16T", "1/32"};
 static const char *const PAT_NAME[NARPPAT] = {"UP", "DOWN", "UP-DOWN", "PLAYED", "RANDOM"};
-static const char *const PK_NAME[6][4] = {{"SPLIT", "POINT", "SCALE", "FOLLOW"},
+static const char *const PK_NAME[7][4] = {{"SPLIT", "POINT", "SCALE", "FOLLOW"},
                                           {"PRESSURE", "AMOUNT", "TONE", "VIBRATO"},
                                           {"LOW GLIDE", "LOW MODE", "GLIDE", "MODE"},
                                           {"SHAPE", "DRIFT", "SPACE", "FILTER"},
                                           {"CHORD", "SPREAD", "SIDECHAIN", "SC RATE"},
-                                          {"RATE", "PATTERN", "OCTAVES", "GATE"}};
+                                          {"RATE", "PATTERN", "OCTAVES", "GATE"},
+                                          {"HEART", "PATTERN", "REAL", "DECAY"}};
 static void cue_play(uint32_t c);
 static void world_level(void);
 static void story_set(int32_t step);
@@ -1076,6 +1092,8 @@ static int32_t pk_get(int pg, int k)
         return KM[k];
     if (pg == PG_CHORD)
         return k == 0 ? set.chord : k == 1 ? set.spread : k == 2 ? set.sc_depth : set.sc_rate;
+    if (pg == PG_HEART)
+        return k == 0 ? set.heart : k == 1 ? set.heart_pat : k == 2 ? set.heart_real : set.heart_dec;
     if (pg == PG_ARP)
         return k == 0 ? set.arp_rate : k == 1 ? set.arp_pat : k == 2 ? set.arp_oct : set.arp_gate;
     return k == 0 ? set.press : k == 1 ? set.pamt : k == 2 ? set.tone : set.vib;
@@ -1083,10 +1101,10 @@ static int32_t pk_get(int pg, int k)
 
 static void pk_range(int pg, int k, int32_t *lo, int32_t *hi)
 {
-    static const int8_t LO[6][4] = {{0, 1, 0, 0}, {0, 0, -50, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 1, 5}};
-    static const int8_t HI[6][4] = {{3, NKEYS - 1, NSCALE - 1, NFOLLOW - 1}, {NPRESS - 1, 100, 50, 100},
+    static const int8_t LO[7][4] = {{0, 1, 0, 0}, {0, 0, -50, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 1, 5}, {0, 0, 0, 0}};
+    static const int8_t HI[7][4] = {{3, NKEYS - 1, NSCALE - 1, NFOLLOW - 1}, {NPRESS - 1, 100, 50, 100},
                                     {100, NGMODE - 1, 100, NGMODE - 1}, {127, 127, 127, 127}, {NCHORD - 1, NSPREAD - 1, 100, NSC - 1},
-                                    {NRATE - 1, NARPPAT - 1, 4, 100}};
+                                    {NRATE - 1, NARPPAT - 1, 4, 100}, {100, NHB - 1, 100, 100}};
     *lo = LO[pg - 1][k];
     *hi = HI[pg - 1][k];
 }
@@ -1095,6 +1113,17 @@ static void pk_text(int pg, int k, char *t)
 {
     int32_t v = pk_get(pg, k);
     t[0] = 0;
+    if (pg == PG_HEART) {
+        if (k == 1)
+            text_cat(t, HB_NAME[v]);
+        else if (k == 0 && !v)
+            text_cat(t, "OFF");
+        else {
+            int_text(v, t);
+            text_cat(t, "%");
+        }
+        return;
+    }
     if (pg == PG_ARP) {
         if (k == 0)
             text_cat(t, RATE_NAME[v]);
@@ -1167,7 +1196,17 @@ static void pk_text(int pg, int k, char *t)
 static void pk_set(int pg, int k, int32_t v)
 {
     char t[16];
-    if (pg == PG_ARP) {
+    if (pg == PG_HEART) {
+        if (k == 0)
+            set.heart = (uint8_t)v;
+        else if (k == 1)
+            set.heart_pat = (uint8_t)v;
+        else if (k == 2)
+            set.heart_real = (uint8_t)v;
+        else
+            set.heart_dec = (uint8_t)v;
+        heart_cfg();
+    } else if (pg == PG_ARP) {
         if (k == 0)
             set.arp_rate = (uint8_t)v;
         else if (k == 1)
@@ -1236,7 +1275,7 @@ static void page_knob(int k, int32_t e)
 {
     int pg = ui.page;
     int32_t lo, hi, v = pk_get(pg, k), list = (pg == PG_SPLIT && k != 1) || (pg == PG_PRESS && k == 0) || (pg == PG_GLIDE && (k & 1)) ||
-                                                 (pg == PG_CHORD && k != 2) || (pg == PG_ARP && k < 3);
+                                                 (pg == PG_CHORD && k != 2) || (pg == PG_ARP && k < 3) || (pg == PG_HEART && k == 1);
     pk_range(pg, k, &lo, &hi);
     if (list) {                          /* a list: two detents a step */
         ui.enc_acc[k] += e;
@@ -1443,8 +1482,8 @@ static void input(void)
             ui.sel_used = 0;
         } else if (k == B_GLO)
             page_go(ui.page == PG_PRESS ? PG_MAIN : PG_PRESS);
-        else if (k == B_EDIT)
-            page_go(ui.page == PG_GLIDE ? PG_MAIN : PG_GLIDE);
+        else if (k == B_EDIT)            /* EDIT: HEART, again GLIDE, again MAIN */
+            page_go(ui.page == PG_HEART ? PG_GLIDE : ui.page == PG_GLIDE ? PG_MAIN : PG_HEART);
     }
     if (ui.fx_t && !(btn >> B_FX & 1u)) {   /* FX let go: the PERFORM page (again: MAIN), unless it played a pad */
         ui.fx_t = 0;
@@ -1565,7 +1604,7 @@ static void lights(void)
         btn |= 1u << B_SEL;
     if (ui.page == PG_PRESS)
         btn |= 1u << B_GLO;
-    if (ui.page == PG_GLIDE)
+    if (ui.page == PG_GLIDE || ui.page == PG_HEART || set.heart)
         btn |= 1u << B_EDIT;
     if (ui.page == PG_PERF || ui.fx)
         btn |= 1u << B_FX;
@@ -1805,7 +1844,7 @@ static void draw_sheet(void)
     static const char *const KN[NPAGE][4] = {
         {"SHAPE", "DRIFT", "SPACE", "FILTER"},  {"SPLIT", "POINT", "SCALE", "FOLLOW"}, {"PRESS", "AMOUNT", "TONE", "VIB"},
         {"LO GLIDE", "LO MODE", "GLIDE", "MODE"}, {"SHAPE", "DRIFT", "SPACE", "FILTER"}, {"CHORD", "SPREAD", "SC", "SC RATE"},
-        {"RATE", "PATTERN", "OCTAVES", "GATE"},
+        {"RATE", "PATTERN", "OCTAVES", "GATE"}, {"HEART", "PATTERN", "REAL", "DECAY"},
     };
     uint32_t i;
     cv_begin(240, 120, C_BLACK);
@@ -1829,7 +1868,7 @@ static void draw_sheet(void)
     sheet_btn(4, 68, "FX+KEY", "EFFECT", ui.page == PG_PERF || ui.fx);
     sheet_btn(62, 68, "SEL", "SPLIT", ui.page == PG_SPLIT);
     sheet_btn(120, 68, "ENV", "CHORD", ui.page == PG_CHORD);
-    sheet_btn(178, 68, "EDIT", "GLIDE", ui.page == PG_GLIDE);
+    sheet_btn(178, 68, "EDIT", "HEART", ui.page == PG_HEART || ui.page == PG_GLIDE);
     sheet_btn(4, 94, "GLO", "PRESSURE", ui.page == PG_PRESS);
     sheet_btn(62, 94, "HOME", "MAIN", ui.page == PG_MAIN);
     sheet_btn(120, 94, "SAVE", "LINK USB", ui.link);
@@ -1996,6 +2035,7 @@ void app_init(void)
     sound();
     arp_cfg();
     eng_sidechain((float)set.sc_depth / 100.0f, set.sc_rate);
+    heart_cfg();
 }
 
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
@@ -2196,6 +2236,8 @@ int app_expect(const char *what, int *got)
         *got = set.arp_rate;
     else if (!strcmp(what, "arp_pat"))
         *got = set.arp_pat;
+    else if (!strcmp(what, "heart_env"))   /* the heart beating now */
+        *got = eng_heart_env() > 0.3f;
     else if (!strcmp(what, "size"))
         *got = set.size;
     else if (!strcmp(what, "bpm"))

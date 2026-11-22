@@ -1,6 +1,9 @@
 # STRANGER SYNTH: CHORD (ENV), FOLLOW CHORD, the SIDECHAIN, PERFORM (FX) and TAPE STOP (REC)
 wait 3200
 tapkey w0 100
+wait 100
+tap ARP
+expect arp 0
 wait 2500
 # CHORD: one finger, a minor chord
 tap ENV

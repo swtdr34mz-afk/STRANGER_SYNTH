@@ -3,7 +3,6 @@ wait 3200
 tapkey w0 100
 wait 400
 # ARP on: every key (the split is off), 1/16 at 84 BPM: a step every 179 ms, UP
-tap ARP
 expect arp 1
 wav arp.wav
 key 0 down 100
@@ -23,7 +22,7 @@ expect arp_notes 0
 # the ARP page: PATTERN to DOWN, OCTAVES 2
 tap LFO
 expect page 6
-turn K2 2
+turn K2 -2
 expect arp_pat 1
 turn K3 2
 expect arp_oct 2

@@ -1,5 +1,8 @@
-# OFFWORLD: GLIDE (EDIT): MONO slides one voice; POLY glides from the last note
+# STRANGER SYNTH: GLIDE (EDIT twice): MONO slides one voice; POLY glides from the last note
 wait 3200
+tap ARP
+expect arp 0
+tap EDIT
 tap EDIT
 expect page 3
 turn K3 50

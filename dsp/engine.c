@@ -25,34 +25,35 @@ const macro_t MACROS[4] = {
  * the filter: breath, hiss) and PLUCK (the amp falls away however long the key is held: 1 a bell's decay).
  * Each in the manner of a classic 80s analogue or a sound of the film scores of the time: the names are our own. */
 const preset_t PRESETS[NPRESETS] = {
-    /* the theme's sequence: two saws a hair apart, the sub, a resonant filter nearly shut (FILTER opens it) */
-    {"THEME SEQUENCE", 0.0f, 0, 0.50f, 0.90f, 0.60f, 150.0f, 3.4f, 0.48f, 0.50f, {35, 40, 30, 20}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    /* the theme: a wall of detuned saws, the sub, a resonant filter nearly shut (FILTER opens it, slowly: the build).
+     * It starts on the arp (UP-DOWN) and holds a deep root an octave under the lowest note: the bass that carries it */
+    {"THEME SEQUENCE", 0.0f, 0, 0.50f, 1.00f, 0.45f, 200.0f, 3.6f, 0.52f, 0.55f, {45, 60, 45, 25}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 1, 0.0f},
     /* kids on bikes, the Juno-60 way: one oscillator's saw and pulse together, the square sub an octave down, its
      * chorus (ENSEMBLE), and the notes ringing out long */
-    {"KIDS ON BIKES", 0.0f, 1, 0.55f, 0.75f, 0.45f, 2200.0f, 1.8f, 0.18f, 0.55f, {55, 70, 45, 80}, 0.0f, 0.05f, 0.55f, 0.0f, -1},
+    {"KIDS ON BIKES", 0.0f, 1, 0.55f, 0.75f, 0.45f, 2200.0f, 1.8f, 0.18f, 0.55f, {55, 70, 45, 80}, 0.0f, 0.05f, 0.55f, 0.0f, -1, 0, 0.0f},
     /* a lazy night: plucks with a sour tritone beside them, wide apart, wobbling: dark and wrong */
-    {"LAZY NIGHT", 6.25f, 0, 0.50f, 0.55f, 0.35f, 300.0f, 2.4f, 0.32f, 0.60f, {18, 80, 35, 35}, 0.15f, 0.0f, 0.0f, 0.0f, -1},
-    /* bells in the dark: sines ringing against each other 3.46 apart (not quite in tune: uneasy), smooth, a canyon of
-     * reverb, each one dying away */
-    {"DARK BELLS", 21.5f, 2, 0.50f, 0.30f, 0.10f, 2400.0f, 0.4f, 0.05f, 0.40f, {62, 45, 118, 80}, 0.60f, 0.0f, 1.0f, 1.0f, -1},
+    {"LAZY NIGHT", 6.25f, 0, 0.50f, 0.55f, 0.35f, 300.0f, 2.4f, 0.32f, 0.60f, {18, 80, 35, 35}, 0.15f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    /* noir tape: a hollow square and a round body, no second harmonic, its highs gone; a fast wobble, hiss, a warm
+     * room: a synth from a worn cassette, not a bell */
+    {"NOIR TAPE", 0.0f, 1, 0.50f, 0.85f, 0.15f, 900.0f, 0.8f, 0.12f, 0.40f, {60, 72, 70, 60}, 0.0f, 0.07f, 0.55f, 0.6f, -1, 0, 9.0f},
     /* chaos: a minor second grinding, ringing, warped; it swells out of the dark */
-    {"CHAOS", 1.0f, 0, 0.50f, 0.90f, 0.70f, 240.0f, 2.2f, 0.50f, 0.40f, {100, 100, 60, 30}, 0.30f, 0.05f, 0.0f, 0.0f, -1},
+    {"CHAOS", 1.0f, 0, 0.50f, 0.90f, 0.70f, 240.0f, 2.2f, 0.50f, 0.40f, {100, 100, 60, 30}, 0.30f, 0.05f, 0.0f, 0.0f, -1, 0, 0.0f},
     /* a five-voice poly brass from below: an octave down under it, slow, deep, a cathedral of reverb: horror */
-    {"FIVE BRASS", -12.0f, 0, 0.50f, 0.75f, 0.55f, 220.0f, 3.8f, 0.30f, 0.60f, {72, 60, 88, 45}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    {"FIVE BRASS", -12.0f, 0, 0.50f, 0.75f, 0.55f, 220.0f, 3.8f, 0.30f, 0.60f, {72, 60, 88, 45}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
     /* the 106's strings: one pulse wide open, its chorus (ENSEMBLE) doing the rest */
-    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
     /* the model D's bass: two saws an octave apart, the sub, a fat ladder filter; it starts on the arp, up and down */
-    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN},
+    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f},
     /* the OB's brass: wide, bright, a little wild */
-    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
     /* the Prophet-6's pad: saw and a fifth above in pulse, slow and wide */
-    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
-    /* the 101's arp bass: one pulse and the sub, squelchy */
-    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
-    /* a lead an octave up, the resonance high: it cuts through */
-    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.10f, 450.0f, 3.5f, 0.55f, 0.75f, {40, 35, 36, 85}, 0.0f, 0.0f, 0.0f, 0.0f, -1},
+    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    /* the 101's arp bass: one pulse and the sub, squelchy; it starts on the arp, up and down */
+    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f},
+    /* an epic lead an octave up: resonant, wide, a long hall and a canyon behind it */
+    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.15f, 450.0f, 3.5f, 0.50f, 0.75f, {48, 70, 108, 80}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
     /* a choir from tape: hollow pulses, slow, far away */
-    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f, 0.0f, -1},
+    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f, 0.0f, -1, 0, 0.0f},
 };
 
 /* a curve: breakpoints (x 0..127, y), x rising, straight lines between them */
@@ -86,7 +87,7 @@ static const bp_t SW_FS[] = {{0, 0.0f}, {25, 0.15f}, {55, 0.45f}, {90, 0.60f}, {
 static const bp_t SW_R[] = {{0, 0.22f}, {25, 0.35f}, {55, 1.0f}, {90, 2.5f}, {127, 5.0f}};
 static const bp_t SW_ENV[] = {{0, 1.0f}, {55, 1.0f}, {90, 0.9f}, {127, 0.78f}};
 /* FILTER: the cutoff (a factor), the resonance added, the envelope's depth (a factor) */
-static const bp_t FL_CUT[] = {{0, 0.35f}, {35, 0.75f}, {70, 1.4f}, {100, 2.6f}, {127, 3.6f}};
+static const bp_t FL_CUT[] = {{0, 0.35f}, {35, 0.8f}, {70, 2.4f}, {100, 7.0f}, {127, 14.0f}};
 static const bp_t FL_RES[] = {{0, 0.0f}, {35, 0.0f}, {70, 0.05f}, {100, 0.12f}, {127, 0.40f}};
 static const bp_t FL_ENV[] = {{0, 0.75f}, {35, 0.9f}, {70, 1.0f}, {100, 1.0f}, {127, 1.1f}};
 static const bp_t FL_DRV[] = {{0, 1.0f}, {100, 1.0f}, {127, 2.0f}};   /* SCREAM: it drives too */
@@ -171,7 +172,7 @@ typedef struct {
     float hiss, drop_p, rumble, thunder_p;
     /* TONE and VIBRATO */
     float tone_mul, vib_c, cut_mul;
-    float ring, noise, sine;             /* RING, NOISE, SINE (the preset's) */
+    float ring, noise, sine, wob;        /* RING, NOISE, SINE, WOBBLE (the preset's) */
     /* PRESSURE: what pressing harder does (PRESS_*), how much 0..1 */
     uint8_t press;
     float pamt;
@@ -207,6 +208,7 @@ void eng_sound(int preset, const uint8_t m[4], float tone, float vib, int press,
     q->ring = pr->ring;
     q->noise = pr->noise;
     q->sine = pr->sine;
+    q->wob = pr->wob;
     q->kr_a = kchunk(CURVE(SW_R, sw) / 4.6f);   /* the release heard about as long as asked (to -40 dB) */
     q->ka_f = kchunk(CURVE(SW_FA, sw) / 1.47f);
     q->kd_f = kchunk(CURVE(SW_FD, sw) / 3.0f);
@@ -268,7 +270,7 @@ static void params_glide(void)
 #define G(f) c.f = P.f + (T.f - P.f) * a
     G(o2_semi); G(pw); G(o2_lvl); G(sub); G(cut_hz); G(env_oct); G(res_k); G(bright); G(det_c); G(rnd_c); G(ens); G(spread);
     G(wow_c); G(drive); G(size); G(t60); G(wet); G(damp_k); G(dsend); G(dfb); G(hiss); G(rumble); G(tone_mul);
-    G(vib_c); G(pamt); G(cut_mul); G(ring); G(noise); G(sine);
+    G(vib_c); G(pamt); G(cut_mul); G(ring); G(noise); G(sine); G(wob);
 #undef G
     P = c;
 }
@@ -890,7 +892,7 @@ static void voice_chunk(voice_t *v, int slot, float *L, float *R, float lfo, flo
     p_amp = P.press == PRESS_SWELL ? 1.0f + 1.5f * pp : P.press == PRESS_POWER ? 1.0f + 0.8f * pp : 1.0f;
     p_det = P.press == PRESS_POWER ? 12.0f * pp : 0.0f;
     p_drv = P.press == PRESS_POWER ? 1.6f * pp : 0.0f;
-    cents = v->drift * P.rnd_c + (v->vib_e * P.vib_c + (P.press == PRESS_VIBRATO ? 35.0f * pp : 0.0f)) * lfo + wow * P.wow_c;
+    cents = v->drift * P.rnd_c + (P.wob + v->vib_e * P.vib_c + (P.press == PRESS_VIBRATO ? 35.0f * pp : 0.0f)) * lfo + wow * P.wow_c;
     f1 = hz_of(v->pitch + (cents - 0.5f * (P.det_c + p_det)) * 0.01f);
     f2 = hz_of(v->pitch + P.o2_semi + (cents + 0.5f * (P.det_c + p_det)) * 0.01f);
     fs = f1 * 0.5f;
@@ -1332,9 +1334,11 @@ void eng_sc_hit(void)
 }
 float eng_sc_gain(void) { return FX.sc_g; }
 static void sc_hit(void) { FX.sc_e = 1.0f; }
-static const uint8_t SC_TPB[NSC] = {24, 12, 48, 0};   /* clock ticks a beat (KICK: none) */
+static const uint8_t SC_TPB[NSC] = {24, 12, 48, 0, 0};   /* clock ticks a beat (KICK, HEART: none) */
+static void hb_tick(int start);
 static void sc_tick(int start)           /* (arp_clock) a MIDI clock tick, or START */
 {
+    hb_tick(start);
     uint8_t rt = sc_rate_v;
     if (start) {
         FX.sc_tick = 0;
@@ -1343,6 +1347,103 @@ static void sc_tick(int start)           /* (arp_clock) a MIDI clock tick, or ST
     if (SC_TPB[rt] && FX.sc_tick % SC_TPB[rt] == 0u)
         sc_hit();
     FX.sc_tick++;
+}
+
+
+/* the HEART: a heartbeat as the groove, at the tempo (or the MIDI clock): lub and dub. Each beat is an analogue kick
+ * (a sine falling from high to low, a click of pitch) blended with a real heart's thump (a soft sine, muffled, a puff of
+ * low noise): REAL 0 all kick, 1 all heart. SINGLE (lub), DOUBLE (lub-dub), SLOW (lub-dub every two beats), RACING
+ * (lub-dub each half beat). It sounds under the sidechain, and with SC RATE at HEART it drives it. */
+static volatile float hb_lvl, hb_real, hb_dec;
+static volatile uint8_t hb_pat;
+static struct {
+    float ph;                            /* the beat's phase (own tempo) */
+    uint32_t tick;                       /* clock ticks (outside tempo) */
+    float f, penv, pdec, amp, att, adec, namp, ndec, sph, n1, n2, lp, vel, env;
+    uint8_t dub_done;
+} HB = {0};
+void eng_heart(float level, int pattern, float real, float decay)
+{
+    hb_lvl = fm_clampf(level, 0.0f, 1.0f);
+    hb_pat = (uint8_t)((uint32_t)pattern < NHB ? pattern : HB_DOUBLE);
+    hb_real = fm_clampf(real, 0.0f, 1.0f);
+    hb_dec = fm_clampf(decay, 0.0f, 1.0f);
+}
+float eng_heart_env(void) { return HB.env; }
+static void hb_hit(float vel)            /* a beat of the heart: the kick and the thump start */
+{
+    float re = hb_real;
+    if (hb_lvl < 0.001f)
+        return;
+    HB.vel = vel;
+    HB.f = 46.0f + 6.0f * vel;
+    HB.penv = 1.0f;
+    HB.pdec = fm_expf(-1.0f / ((0.012f + 0.02f * re) * SR));
+    HB.att = 0.0f;
+    HB.adec = fm_expf(-1.0f / ((0.10f + 0.30f * hb_dec) * SR));
+    HB.namp = 1.0f;
+    HB.ndec = fm_expf(-1.0f / (0.07f * SR));
+    if (sc_rate_v == SC_HEART)
+        sc_hit();
+}
+static const float HB_CYC[NHB] = {1.0f, 1.0f, 2.0f, 0.5f};   /* beats a cycle */
+static void hb_block(uint32_t n, int ext)  /* own tempo: the beats due this block */
+{
+    float cyc, dub;
+    if (ext || hb_lvl < 0.001f)
+        return;
+    cyc = SR * 60.0f / (A.bpm > 1.0f ? A.bpm : 120.0f) * HB_CYC[hb_pat];
+    dub = hb_pat == HB_RACE ? 0.42f : 0.30f;   /* the second beat: a third of the way, sooner when racing */
+    HB.ph += (float)n / cyc;
+    if (HB.ph >= 1.0f) {
+        HB.ph -= (float)(int)HB.ph;
+        HB.dub_done = 0;
+        hb_hit(1.0f);
+    } else if (hb_pat != HB_SINGLE && !HB.dub_done && HB.ph >= dub) {
+        HB.dub_done = 1;
+        hb_hit(0.72f);
+    }
+}
+static void hb_tick(int start)           /* (arp_clock) a MIDI clock tick, or START */
+{
+    uint32_t cyc = (uint32_t)(24.0f * HB_CYC[hb_pat]), dub = hb_pat == HB_RACE ? 5u : (uint32_t)(0.3f * (float)cyc + 0.5f), t;
+    if (start) {
+        HB.tick = 0;
+        return;
+    }
+    t = HB.tick % cyc;
+    if (t == 0u)
+        hb_hit(1.0f);
+    else if (t == dub && hb_pat != HB_SINGLE)
+        hb_hit(0.72f);
+    HB.tick++;
+}
+static inline float hb_sample(void)      /* the heart's sample (mono) */
+{
+    float re = hb_real, s, q, w, body, x;
+    if (HB.amp < 0.0001f && HB.namp < 0.0001f && HB.att >= 1.0f)
+        return 0.0f;
+    HB.sph += HB.f * (1.0f + (3.0f - 2.4f * re) * HB.penv) / SR;
+    if (HB.sph >= 1.0f)
+        HB.sph -= 1.0f;
+    HB.penv *= HB.pdec;
+    q = HB.sph < 0.5f ? HB.sph : HB.sph - 0.5f;
+    s = 16.0f * q * (0.5f - q);
+    s = HB.sph < 0.5f ? s : -s;
+    if (HB.att < 1.0f) {                 /* the attack: a click (kick) or a soft push (heart) */
+        HB.att += 1.0f / ((0.001f + 0.012f * re) * SR);
+        HB.amp = fm_minf(1.0f, HB.att);
+    } else
+        HB.amp *= HB.adec;
+    w = white();
+    HB.n1 += 0.012f * (w - HB.n1);
+    HB.n2 += 0.012f * (HB.n1 - HB.n2);
+    HB.namp *= HB.ndec;
+    body = HB.n2 * 9.0f * HB.namp;       /* the thump's breath: low noise */
+    x = s * HB.amp * (1.0f - 0.35f * re) + body * re;
+    HB.lp += (0.35f - 0.3f * re) * (x - HB.lp);   /* the real heart muffled, as through a chest */
+    HB.env = HB.amp * HB.vel;
+    return HB.lp * HB.vel * hb_lvl * 1.8f;
 }
 
 static inline int16_t tq(float x) { return (int16_t)(fm_clampf(x, -3.99f, 3.99f) * 8192.0f); }
@@ -1406,7 +1507,8 @@ static void fx_block(uint32_t n)
     else if (sc_rate_v == SC_2)
         beat *= 2.0f;
     FX.sc_rel = fm_expf(-1.0f / (fm_minf(0.5f * beat, 0.3f * SR) * 0.35f));
-    if (!eng_clock_ext() && sc_rate_v != SC_KICK) {
+    hb_block(n, eng_clock_ext());
+    if (!eng_clock_ext() && sc_rate_v != SC_KICK && sc_rate_v != SC_HEART) {
         FX.sc_ph += (float)n / beat;
         if (FX.sc_ph >= 1.0f) {
             FX.sc_ph -= (float)(int)FX.sc_ph;
@@ -1418,7 +1520,19 @@ static void fx_block(uint32_t n)
 /* each sample, at the end: the tape, the effects, the sidechain */
 static inline void fx_sample(float *pl, float *pr)
 {
-    float l = *pl, r = *pr, mono = 0.5f * (l + r), a;
+    float l = *pl, r = *pr, mono, a;
+    {                                    /* the sidechain (the synth only): down at each hit, back over half a beat */
+        float d = sc_depth_v, to;
+        FX.sc_e *= FX.sc_rel;
+        to = 1.0f - d * FX.sc_e;
+        FX.sc_g += (to - FX.sc_g) * (to < FX.sc_g ? 0.05f : 0.01f);
+        l *= FX.sc_g;
+        r *= FX.sc_g;
+    }
+    a = hb_sample();                     /* the HEART, under it all, in the middle */
+    l += a;
+    r += a;
+    mono = 0.5f * (l + r);
     FX.half ^= 1u;                       /* the tape records, always (22,050 Hz) */
     if (FX.half)
         FX.tacc = mono;
@@ -1524,15 +1638,6 @@ static inline void fx_sample(float *pl, float *pr)
             FX.tmix = fm_minf(1.0f, FX.tmix + 1.0f / (0.004f * SR));
         l += (FX.tlp * g - l) * FX.tmix;
         r += (FX.tlp * g - r) * FX.tmix;
-    }
-    /* the sidechain: down at each hit, back over half a beat */
-    {
-        float d = sc_depth_v, to;
-        FX.sc_e *= FX.sc_rel;
-        to = 1.0f - d * FX.sc_e;
-        FX.sc_g += (to - FX.sc_g) * (to < FX.sc_g ? 0.05f : 0.01f);
-        l *= FX.sc_g;
-        r *= FX.sc_g;
     }
     *pl = l;
     *pr = r;

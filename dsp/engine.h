@@ -46,6 +46,8 @@ typedef struct {
     float ring, noise, pluck;            /* RING 0..1, NOISE 0..1, PLUCK 0..1 */
     float sine;                          /* SINE: the first oscillator from a saw toward a sine, 0..1 */
     int8_t arp;                          /* the arp it starts with (ARP_*), -1: as it is */
+    uint8_t deep;                        /* 1: with the arp, a deep root held an octave under its lowest note */
+    float wob;                           /* WOBBLE: a fast vibrato from the start, cents */
 } preset_t;
 #define NPRESETS 13
 extern const preset_t PRESETS[NPRESETS];
@@ -99,10 +101,14 @@ uint32_t eng_fx_busy(void);              /* the tape still away from the live so
 float eng_fx_amt(int fx);                /* how much of an effect sounds now, 0..1 (the screen) */
 /* the SIDECHAIN: everything ducked on each beat (1/4, 1/8, 1/2: the tempo or the MIDI clock), or on KICK (eng_sc_hit,
  * a kick from outside), DEPTH 0..1 */
-enum { SC_4, SC_8, SC_2, SC_KICK, NSC };
+enum { SC_4, SC_8, SC_2, SC_KICK, SC_HEART, NSC };
 void eng_sidechain(float depth, int rate);
 void eng_sc_hit(void);
 float eng_sc_gain(void);                 /* the duck now, 0..1 (1: none) */
+/* the HEART: a heartbeat as the groove (an analogue kick and a real heart's thump), at the tempo or the clock */
+enum { HB_SINGLE, HB_DOUBLE, HB_SLOW, HB_RACE, NHB };
+void eng_heart(float level, int pattern, float real, float decay);   /* level 0: off */
+float eng_heart_env(void);               /* the beat now, 0..1 (the screen) */
 
 /* for the screen and the tests */
 /* a write to the flash stops the sound for a moment: the app fades the output out first (and back in after) */

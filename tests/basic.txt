@@ -5,8 +5,11 @@ wait 900
 shot intro.png
 expect intro 1
 expect preset 0
-expect m1 35
-expect zone3 -1
+expect m1 45
+expect arp 1
+# the arp off here: the keys play themselves
+tap ARP
+expect arp 0
 # a key ends the intro and plays: the night's sequence
 wav brass.wav
 key w4 down 110

@@ -84,3 +84,13 @@ SCREAM drives. The arp's tempo starts at 84 BPM (1/16).
   (a tritone beside it, ring, wobble); **DARK BELLS** replace DIRTY BELLS (sines ringing out of tune, smooth, a canyon
   of reverb); **FIVE BRASS** from below (an octave down, deeper, a cathedral); **MODEL BASS** starts on the arp
   (UP-DOWN). END CREDITS and CREDITS RISE are gone: 13 presets.
+
+## v0.5.0: the HEART
+
+- **HEART** (EDIT; again: GLIDE): a heartbeat as the groove, at the tempo or SIX MACHINES' clock. K1 the level (0: off),
+  K2 SINGLE / DOUBLE (lub-dub) / SLOW / RACING, K3 REAL (an analogue kick toward a real heart's muffled thump),
+  K4 DECAY. SC RATE **HEART** (CHORD page): the sidechain ducks on every beat. The picture pulses red with it.
+- **THEME SEQUENCE** starts on the arp (UP-DOWN) and holds a deep root an octave under the arp's lowest note; a wall
+  of detuned saws. FILTER opens much further now (BRIGHT, SCREAM).
+- **NOIR TAPE** replaces DARK BELLS (a hollow square synth from a worn tape: wobble, hiss, the highs gone).
+- **MONO ARP BASS** starts on the arp (UP-DOWN); **SYNC LEAD** wider, with a long hall.

@@ -1,0 +1,21 @@
+# STRANGER SYNTH: the HEART (EDIT): a heartbeat as the groove
+wait 3200
+tapkey w0 100
+wait 1500
+tap EDIT
+expect page 7
+turn K1 40
+wav heart.wav
+wait 3000
+wavstop
+shot heart.png
+# REAL all the way: the heart's thump; SLOW
+turn K3 30
+turn K2 2
+wav heart_real.wav
+wait 3000
+wavstop
+tap EDIT
+expect page 3
+tap EDIT
+expect page 0
