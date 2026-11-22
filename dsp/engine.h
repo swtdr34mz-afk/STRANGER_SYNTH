@@ -29,7 +29,7 @@ typedef struct {
     uint8_t centre[MACRO_ZONES];
     const char *zone[MACRO_ZONES];
 } macro_t;
-extern const macro_t MACROS[4];          /* K1 SWELL, K2 DRIFT, K3 SPACE, K4 RAIN */
+extern const macro_t MACROS[4];          /* K1 SHAPE, K2 DRIFT, K3 SPACE, K4 FILTER */
 
 /* a preset: its name, its timbre, and the macros it starts at */
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct {
     float bright;                        /* velocity's share in the opening, 0 .. 1 */
     uint8_t m[4];                        /* the macros it starts at */
 } preset_t;
-#define NPRESETS 7
+#define NPRESETS 10
 extern const preset_t PRESETS[NPRESETS];
 
 void eng_init(void);
@@ -86,6 +86,19 @@ void eng_clock(int what);                /* MIDI real time in: a clock tick (0xF
 int eng_clock_ext(void);                 /* 1: the clock comes from outside (ticks within the last half second) */
 uint32_t eng_arp_steps(void);            /* steps played since the start (the screen, the tests) */
 float eng_arp_pitch(void);               /* the arp's last note (0: none yet) */
+
+/* PERFORM (STRANGER SYNTH): the live effects, on the whole sound (bit i of the mask: effect i on; REWIND runs once when
+ * its bit rises, TAPE STOP spins back up when it falls) */
+enum { FX_TAPESTOP, FX_VHS, FX_REWIND, FX_GATED, FX_ECHO, FX_LIGHTS, FX_WALKIE, FX_RISER, NFX };
+void eng_fx(uint32_t mask);
+uint32_t eng_fx_busy(void);              /* the tape still away from the live sound (stopped, spinning, rewinding) */
+float eng_fx_amt(int fx);                /* how much of an effect sounds now, 0..1 (the screen) */
+/* the SIDECHAIN: everything ducked on each beat (1/4, 1/8, 1/2: the tempo or the MIDI clock), or on KICK (eng_sc_hit,
+ * a kick from outside), DEPTH 0..1 */
+enum { SC_4, SC_8, SC_2, SC_KICK, NSC };
+void eng_sidechain(float depth, int rate);
+void eng_sc_hit(void);
+float eng_sc_gain(void);                 /* the duck now, 0..1 (1: none) */
 
 /* for the screen and the tests */
 /* a write to the flash stops the sound for a moment: the app fades the output out first (and back in after) */

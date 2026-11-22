@@ -5,9 +5,9 @@ wait 900
 shot intro.png
 expect intro 1
 expect preset 0
-expect m1 45
-expect zone3 2
-# a key ends the intro and plays: the brass swells
+expect m1 0
+expect zone1 0
+# a key ends the intro and plays: the night's sequence
 wav brass.wav
 key w4 down 110
 wait 200
@@ -22,7 +22,7 @@ key w6 up
 key w8 up
 wait 5000
 wavstop
-expect peak_db_min -24
+expect peak_db_min -28
 # DRONE: the chord stays, a deep root under it
 tap PLAY
 expect drone 1
@@ -49,10 +49,11 @@ expect epic 1
 tapkey w9 100
 wait 200
 expect latched 65536
-# K4 slowly to STORM: rain on the screen
-turn K4 120 90
+# K4 slowly to BRIGHT: the filter opens
+turn K4 70 90
 wait 300
 expect zone4 3
+expect m4 100
 wav storm.wav
 wait 4000
 wavstop
@@ -67,12 +68,12 @@ shot freeze.png
 turn PRESET 1
 wait 100
 expect preset 1
-expect m1 45
+expect m1 55
 shot preset.png
 turn PRESET -1
 wait 100
 expect preset 0
-expect m4 105
+expect m4 100
 # REC held: every note off; DRONE off
 press REC
 wait 1100
@@ -93,5 +94,5 @@ reboot
 wait 3200
 expect octave 1
 expect epic 1
-expect m4 105
+expect m4 100
 expect drone 0

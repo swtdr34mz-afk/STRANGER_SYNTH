@@ -14,21 +14,35 @@
 /* The zones' centres are where the curves below have their breakpoints: at a zone every parameter a macro moves is
  * exactly the value chosen for it there; between two zones they move from one to the other. */
 const macro_t MACROS[4] = {
-    {"SWELL", 5, {12, 45, 75, 105, 127}, {"STAB", "BRASS", "SWELL", "TIDE", "ETERNAL"}},
-    {"DRIFT", 5, {0, 35, 70, 105, 127}, {"CLEAN", "CS", "ENSEMBLE", "WIDE", "BROKEN"}},
+    {"SHAPE", 5, {0, 25, 55, 90, 127}, {"PLUCK", "STAB", "BRASS", "SWELL", "PAD"}},
+    {"DRIFT", 5, {0, 35, 70, 105, 127}, {"CLEAN", "ANALOG", "ENSEMBLE", "WIDE", "TAPE"}},
     {"SPACE", 5, {15, 50, 85, 115, 127}, {"ROOM", "HALL", "CATHEDRAL", "CANYON", "FREEZE"}},
-    {"RAIN", 5, {0, 35, 70, 105, 127}, {"DRY", "DRIZZLE", "RAIN", "STORM", "FLOOD"}},
+    {"FILTER", 5, {0, 35, 70, 100, 127}, {"DARK", "WARM", "OPEN", "BRIGHT", "SCREAM"}},
 };
 
-/* name, o2 semitones, o2 pulse, width, o2 level, sub, cutoff, envelope octaves, resonance, velocity, macros */
+/* name, o2 semitones, o2 pulse, width, o2 level, sub, cutoff, envelope octaves, resonance, velocity, macros
+ * (SHAPE, DRIFT, SPACE, FILTER). Each in the manner of a classic 80s analogue: the names are our own. */
 const preset_t PRESETS[NPRESETS] = {
-    {"OFFWORLD BRASS", 0.0f, 0, 0.50f, 1.00f, 0.35f, 260.0f, 4.6f, 0.20f, 0.60f, {45, 35, 85, 0}},
-    {"NEON TOWER", 7.0f, 0, 0.50f, 0.60f, 0.20f, 600.0f, 3.6f, 0.25f, 0.70f, {45, 35, 50, 0}},
-    {"PYRAMID HALL", 12.0f, 0, 0.50f, 0.55f, 0.30f, 300.0f, 4.0f, 0.10f, 0.50f, {105, 70, 115, 35}},
-    {"LAST SUNRISE", 19.0f, 0, 0.50f, 0.42f, 0.15f, 650.0f, 2.4f, 0.12f, 0.50f, {105, 70, 50, 35}},
-    {"SKYLINE", -12.0f, 0, 0.50f, 0.70f, 0.00f, 900.0f, 3.0f, 0.30f, 0.80f, {12, 70, 50, 35}},
-    {"DEEP SECTOR", -12.0f, 1, 0.55f, 0.80f, 0.60f, 140.0f, 3.6f, 0.45f, 0.40f, {105, 105, 85, 105}},
-    {"ACID SKY", 0.0f, 0, 0.50f, 0.50f, 0.20f, 180.0f, 5.0f, 0.78f, 0.80f, {45, 35, 85, 35}},
+    /* the night's sequence: saw and pulse, a resonant filter that snaps shut; made for the arp */
+    {"NIGHT SEQUENCE", 0.0f, 1, 0.62f, 0.80f, 0.25f, 220.0f, 4.4f, 0.42f, 0.70f, {0, 30, 45, 40}},
+    /* a five-voice poly brass: two saws a little apart, the filter swelling open */
+    {"FIVE BRASS", 0.0f, 0, 0.50f, 1.00f, 0.30f, 300.0f, 4.2f, 0.22f, 0.60f, {55, 40, 55, 60}},
+    /* the 106's strings: one pulse wide open, its chorus (ENSEMBLE) doing the rest */
+    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 70, 55}},
+    /* the model D's bass: two saws an octave apart, the sub, a fat ladder filter */
+    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 15, 40}},
+    /* the OB's brass: wide, bright, a little wild */
+    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 55, 70}},
+    /* the Prophet-6's pad: saw and a fifth above in pulse, slow and wide */
+    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 95, 50}},
+    /* the 101's arp bass: one pulse and the sub, squelchy */
+    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 20, 35}},
+    /* a lead an octave up, the resonance high: it cuts through */
+    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.10f, 450.0f, 3.5f, 0.55f, 0.75f, {40, 35, 60, 85}},
+    /* a choir from tape: hollow pulses, slow, far away */
+    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 110, 45}},
+    /* the dark below: a fifth under, a slow growl (OFFWORLD's brass, from the other side) */
+    {"THE DARK BELOW", -5.0f, 0, 0.50f, 0.90f, 0.60f, 120.0f, 3.6f, 0.35f, 0.50f, {90, 105, 115, 25}},
 };
 
 /* a curve: breakpoints (x 0..127, y), x rising, straight lines between them */
@@ -53,12 +67,18 @@ static float curve(const bp_t *t, uint32_t n, float x)
 }
 
 /* SWELL: the attacks (amp, filter), the filter's fall and where it stays, the release */
-static const bp_t SW_AA[] = {{0, 0.004f}, {12, 0.010f}, {45, 0.12f}, {75, 0.9f}, {105, 3.5f}, {127, 7.0f}};
-static const bp_t SW_FA[] = {{0, 0.010f}, {12, 0.030f}, {45, 0.35f}, {75, 1.8f}, {105, 5.0f}, {127, 9.0f}};
-static const bp_t SW_FD[] = {{0, 0.15f}, {12, 0.25f}, {45, 1.2f}, {75, 2.5f}, {105, 4.0f}, {127, 6.0f}};
-static const bp_t SW_FS[] = {{0, 0.20f}, {12, 0.25f}, {45, 0.45f}, {75, 0.60f}, {105, 0.75f}, {127, 0.85f}};
-static const bp_t SW_R[] = {{0, 0.35f}, {12, 0.5f}, {45, 1.4f}, {75, 2.5f}, {105, 4.0f}, {127, 7.0f}};
-static const bp_t SW_ENV[] = {{0, 1.0f}, {45, 1.0f}, {75, 0.92f}, {105, 0.82f}, {127, 0.76f}};
+static const bp_t SW_AA[] = {{0, 0.002f}, {25, 0.006f}, {55, 0.08f}, {90, 0.9f}, {127, 3.5f}};
+static const bp_t SW_DA[] = {{0, 0.40f}, {25, 0.45f}, {55, 1.2f}, {90, 1.5f}, {127, 2.0f}};    /* the amp's decay */
+static const bp_t SW_SA[] = {{0, 0.0f}, {25, 0.35f}, {55, 0.85f}, {90, 0.9f}, {127, 0.95f}};    /* and where it stays */
+static const bp_t SW_FA[] = {{0, 0.002f}, {25, 0.010f}, {55, 0.25f}, {90, 1.6f}, {127, 5.0f}};
+static const bp_t SW_FD[] = {{0, 0.12f}, {25, 0.22f}, {55, 1.0f}, {90, 2.5f}, {127, 5.0f}};
+static const bp_t SW_FS[] = {{0, 0.0f}, {25, 0.15f}, {55, 0.45f}, {90, 0.60f}, {127, 0.75f}};
+static const bp_t SW_R[] = {{0, 0.22f}, {25, 0.35f}, {55, 1.0f}, {90, 2.5f}, {127, 5.0f}};
+static const bp_t SW_ENV[] = {{0, 1.0f}, {55, 1.0f}, {90, 0.9f}, {127, 0.78f}};
+/* FILTER: the cutoff (a factor), the resonance added, the envelope's depth (a factor) */
+static const bp_t FL_CUT[] = {{0, 0.35f}, {35, 0.75f}, {70, 1.4f}, {100, 2.6f}, {127, 3.6f}};
+static const bp_t FL_RES[] = {{0, 0.0f}, {35, 0.0f}, {70, 0.05f}, {100, 0.12f}, {127, 0.40f}};
+static const bp_t FL_ENV[] = {{0, 0.75f}, {35, 0.9f}, {70, 1.0f}, {100, 1.0f}, {127, 1.1f}};
 /* DRIFT: the oscillators apart (cents), the random drift (cents), the ensemble, the stereo spread, the tape's wow, grit */
 static const bp_t DR_DET[] = {{0, 1.0f}, {35, 7.0f}, {70, 10.0f}, {105, 16.0f}, {127, 28.0f}};
 static const bp_t DR_RND[] = {{0, 0.0f}, {35, 3.0f}, {70, 4.0f}, {105, 6.0f}, {127, 14.0f}};
@@ -139,7 +159,7 @@ typedef struct {
     /* RAIN */
     float hiss, drop_p, rumble, thunder_p;
     /* TONE and VIBRATO */
-    float tone_mul, vib_c;
+    float tone_mul, vib_c, cut_mul;
     /* PRESSURE: what pressing harder does (PRESS_*), how much 0..1 */
     uint8_t press;
     float pamt;
@@ -153,7 +173,7 @@ void eng_sound(int preset, const uint8_t m[4], float tone, float vib, int press,
 {
     const preset_t *pr = &PRESETS[(uint32_t)preset < NPRESETS ? preset : 0];
     prm_t *q = &P_next;
-    float sw = (float)m[0], dr = (float)m[1], sp = (float)m[2], rn = (float)m[3], atk;
+    float sw = (float)m[0], dr = (float)m[1], sp = (float)m[2], fl = (float)m[3], rn = 0.0f, atk;   /* (no rain here) */
     p_seq++;                             /* odd: being written */
     q->o2_semi = pr->o2_semi;
     q->o2_pulse = pr->o2_pulse;
@@ -161,14 +181,15 @@ void eng_sound(int preset, const uint8_t m[4], float tone, float vib, int press,
     q->o2_lvl = pr->o2_lvl;
     q->sub = pr->sub;
     q->cut_hz = pr->cut_hz;
-    q->env_oct = pr->env_oct * CURVE(SW_ENV, sw);
-    q->res_k = 2.0f - 1.9f * fm_clampf(pr->res, 0.0f, 0.92f);
+    q->env_oct = pr->env_oct * CURVE(SW_ENV, sw) * CURVE(FL_ENV, fl);
+    q->res_k = 2.0f - 1.9f * fm_clampf(pr->res + CURVE(FL_RES, fl), 0.0f, 0.92f);
+    q->cut_mul = CURVE(FL_CUT, fl);
     q->bright = pr->bright;
     /* the attack aims at 1.3 and stops at 1: it takes 1.47 time constants */
     atk = CURVE(SW_AA, sw) / 1.47f;
     q->ka_a = kchunk(atk);
-    q->kd_a = kchunk(1.2f);
-    q->s_a = 0.9f;
+    q->kd_a = kchunk(CURVE(SW_DA, sw) / 3.0f);
+    q->s_a = CURVE(SW_SA, sw);
     q->kr_a = kchunk(CURVE(SW_R, sw) / 4.6f);   /* the release heard about as long as asked (to -40 dB) */
     q->ka_f = kchunk(CURVE(SW_FA, sw) / 1.47f);
     q->kd_f = kchunk(CURVE(SW_FD, sw) / 3.0f);
@@ -220,7 +241,7 @@ static void params_glide(void)
 #define G(f) c.f = P.f + (T.f - P.f) * a
     G(o2_semi); G(pw); G(o2_lvl); G(sub); G(cut_hz); G(env_oct); G(res_k); G(bright); G(det_c); G(rnd_c); G(ens); G(spread);
     G(wow_c); G(drive); G(size); G(t60); G(wet); G(damp_k); G(dsend); G(dfb); G(hiss); G(rumble); G(tone_mul);
-    G(vib_c); G(pamt);
+    G(vib_c); G(pamt); G(cut_mul);
 #undef G
     P = c;
 }
@@ -249,7 +270,7 @@ static voice_t V[ENG_NV];
 static const float PANS[ENG_NV] = {-0.9f, 0.9f, -0.5f, 0.5f, -0.2f, 0.2f, -0.7f, 0.7f};
 
 /* the queue: main loop -> render */
-enum { EV_ON, EV_OFF, EV_ALL_OFF, EV_PANIC, EV_PRESS, EV_MOVE, EV_WORLD, EV_SFX, EV_MEM, EV_CLK };
+enum { EV_ON, EV_OFF, EV_ALL_OFF, EV_PANIC, EV_PRESS, EV_MOVE, EV_WORLD, EV_SFX, EV_MEM, EV_CLK, EV_SC };
 typedef struct {
     uint8_t type, retrig;
     int16_t id, id2;
@@ -452,8 +473,7 @@ static const bed_t BEDS[NWORLD] = {
     {700.0f, 150.0f, 0.060f, 0.25f, 0.60f, 0.0f, 0.0f, 0.0f},      /* ROOFTOP: wind */
 };
 
-#define MEM_N 66150u                     /* MEMORY: 3 s at 22,050 Hz, 8 bits (square-law) */
-static int8_t mem_buf[MEM_N] PLAT_POOL;
+#define MEM_N 66150u                     /* (OFFWORLD's MEMORY: gone here; its room is the TAPE's, below) */
 #define NGRAIN 4
 
 static struct {
@@ -471,17 +491,6 @@ static struct {
     float gpos[NGRAIN], gu[NGRAIN], gdu[NGRAIN], gpan[NGRAIN];
 } W;
 
-static int8_t mem_enc(float x)           /* -2..2 into 8 bits, finer near zero */
-{
-    float a = fm_clampf(fm_fabsf(x) * 0.5f, 0.0f, 1.0f);
-    int32_t q = (int32_t)(fm_sqrtf(a) * 127.0f);
-    return (int8_t)(x < 0.0f ? -q : q);
-}
-static float mem_dec(int8_t q)
-{
-    float a = (float)q * (1.0f / 127.0f);
-    return (a < 0.0f ? -a * a : a * a) * 2.0f;
-}
 
 static void grain_new(int g)
 {
@@ -630,42 +639,17 @@ static inline void world_sample(float *l, float *r, float *send)
 }
 
 /* MEMORY: recording what plays (when frozen: not); the frozen seconds played back as a cloud of grains */
-static inline void memory_sample(float in, float *l, float *r, float *send)
+static inline void memory_sample(float in, float *l, float *r, float *send)   /* (no MEMORY on this side) */
 {
-    uint32_t g;
-    float sl = 0.0f, sr = 0.0f;
-    if (!W.mem_on) {
-        W.mem_half ^= 1u;                /* every other sample: 22,050 Hz */
-        if (W.mem_half) {
-            mem_buf[W.mem_w] = mem_enc(in);
-            if (++W.mem_w >= MEM_N)
-                W.mem_w = 0;
-        }
-    }
-    if (W.mem_g < 0.0005f)
-        return;
-    for (g = 0; g < NGRAIN; g++) {
-        float u = W.gu[g], w = 4.0f * u * (1.0f - u), at = W.gpos[g] + u * 0.18f * SR * 0.5f, fr, x;
-        uint32_t i0 = (uint32_t)at, i1;
-        if (i0 >= MEM_N)
-            i0 -= MEM_N;
-        i1 = i0 + 1u >= MEM_N ? 0u : i0 + 1u;
-        fr = at - (float)(uint32_t)at;
-        x = (mem_dec(mem_buf[i0]) * (1.0f - fr) + mem_dec(mem_buf[i1]) * fr) * w * w;
-        sl += x * (1.0f - W.gpan[g]);
-        sr += x * W.gpan[g];
-        W.gu[g] += W.gdu[g];
-        if (W.gu[g] >= 1.0f)
-            grain_new((int)g);
-    }
-    sl *= W.mem_g * 0.9f;
-    sr *= W.mem_g * 0.9f;
-    *l += sl;
-    *r += sr;
-    *send += 0.5f * (sl + sr);
+    (void)in;
+    (void)l;
+    (void)r;
+    (void)send;
 }
 
 static void arp_clock(int what);
+static void sc_hit(void);
+static void sc_tick(int start);
 static void events(void)
 {
     while (q_r != q_w) {
@@ -716,6 +700,8 @@ static void events(void)
             world_event(e.id, e.pitch, e.vel);
         } else if (e.type == EV_CLK) {
             arp_clock(e.id);
+        } else if (e.type == EV_SC) {
+            sc_hit();
         } else if (e.type == EV_MEM) {
             if (e.id && !W.mem_on) {
                 int g;
@@ -791,6 +777,7 @@ static struct {
     float level, gain_s, lim_env, gr_min, duck;
 } E;
 
+static void fx_init(void);
 void eng_init(void)
 {
     uint32_t i, off = 0;
@@ -801,7 +788,7 @@ void eng_init(void)
     zero(dl_r, sizeof dl_r);
     zero(rv_mem, sizeof rv_mem);
     zero(ap_buf, sizeof ap_buf);
-    zero(mem_buf, sizeof mem_buf);
+    fx_init();
     zero(&W, sizeof W);
     for (i = 0; i < 8u; i++) {
         E.rv_off[i] = off;
@@ -823,6 +810,7 @@ void eng_init(void)
 }
 
 /* one voice's chunk: envelopes, pitches and the filter's coefficients, then CH samples into L / R */
+static float fx_cut = 1.0f;              /* RISER: the voices' cutoff, a factor (the perform section sets it) */
 static void voice_chunk(voice_t *v, int slot, float *L, float *R, float lfo, float wow)
 {
     float ea0, ea1, dea, f1, f2, fs, i1, i2, is, cents, fc, g, a1a, a2a, a3a, a1b, a2b, a3b, ka, pan, gl, gr, vamp;
@@ -883,7 +871,7 @@ static void voice_chunk(voice_t *v, int slot, float *L, float *R, float lfo, flo
     i2 = fm_minf(f2 / SR, 0.45f);
     is = fs / SR;
     /* the cutoff: closed, the envelope's opening (harder = more), the key's pitch, TONE */
-    fc = P.cut_hz * P.tone_mul * fm_exp2f((v->pitch - 60.0f) * (0.5f / 12.0f)) *
+    fc = P.cut_hz * P.tone_mul * P.cut_mul * fx_cut * fm_exp2f((v->pitch - 60.0f) * (0.5f / 12.0f)) *
          fm_exp2f(P.env_oct * v->ef * (1.0f - P.bright + P.bright * v->vel) + p_oct);
     fc = fm_clampf(fc, 30.0f, 15000.0f);
     g = fm_tanf(FM_PI * fc / SR);
@@ -1165,6 +1153,7 @@ static void arp_clock(int what)
         if (AR.ext_age < (uint32_t)SR)
             clk_period = AR.ext_age;
         AR.ext_age = 0;
+        sc_tick(0);
         if (!AR.run)
             return;
         if (A.on && A.n && AR.tick % tps == 0u) {
@@ -1174,6 +1163,7 @@ static void arp_clock(int what)
         }
         AR.tick++;
     } else if (what == CLK_START) {
+        sc_tick(1);
         AR.tick = 0;
         AR.idx = 0;
         AR.run = 1;
@@ -1227,6 +1217,277 @@ static void arp_block(uint32_t n)
     }
 }
 
+
+/* -------------------------------------------------------------- perform --- */
+/* STRANGER SYNTH's performance effects and the sidechain, on the whole sound at the end (before the limiter).
+ *   TAPE STOP   the tape slows to a stop (and spins back up when let go)      REWIND  the tape runs back, once
+ *   VHS         a worn video tape: wow and flutter, the highs gone, hiss      GATED   the 80s gated reverb
+ *   ECHO        the delay thrown: a big send, long feedback                   LIGHTS  everything sinks under a low-pass
+ *   WALKIE      a walkie-talkie: a narrow band, grit and static               RISER   the filters open over 8 s, noise
+ * The tape: the last 1.5 s of the sound, mono, 22,050 Hz (OFFWORLD's MEMORY room). The SIDECHAIN ducks it all on each
+ * beat (1/4, 1/8, 1/2 of the tempo or the MIDI clock), or on a kick from outside (KICK). */
+#define TAPE_N 33075u
+static int16_t tape_buf[TAPE_N] PLAT_POOL;
+#define VHS_N 1024u
+static float vhs_l[VHS_N] PLAT_POOL, vhs_r[VHS_N] PLAT_POOL;
+static volatile uint32_t fx_mask;
+static volatile float sc_depth_v;
+static volatile uint8_t sc_rate_v;
+enum { TP_LIVE, TP_STOP, TP_SPIN, TP_REW, TP_BACK };
+static struct {
+    uint32_t prev;
+    float a[NFX];                        /* each effect's amount 0..1, gliding */
+    uint32_t tw;                         /* the tape: where it writes */
+    uint8_t half, tmode;
+    float tacc, trd, rate, tmix, rw_t, tlp;
+    uint32_t vw;                         /* VHS */
+    float vph1, vph2, vlp_l, vlp_r;
+    float gate_t, gate_g;                /* GATED */
+    uint32_t notes_seen;
+    float lo_l1, lo_l2, lo_r1, lo_r2, lo_k;   /* LIGHTS */
+    float wk_h, wk_hp, wk_l;             /* WALKIE */
+    float rise, rn_lp, rn_hp;            /* RISER */
+    float sc_ph, sc_e, sc_g, sc_rel;     /* SIDECHAIN */
+    uint32_t sc_tick;
+} FX = {0};
+
+static void fx_init(void)
+{
+    zero(tape_buf, sizeof tape_buf);
+    zero(vhs_l, sizeof vhs_l);
+    zero(vhs_r, sizeof vhs_r);
+    zero(&FX, sizeof FX);
+    FX.sc_g = FX.gate_g = 1.0f;
+    FX.sc_rel = 0.999f;
+}
+void eng_fx(uint32_t mask) { fx_mask = mask; }
+uint32_t eng_fx_busy(void) { return FX.tmode != TP_LIVE; }
+float eng_fx_amt(int fx)
+{
+    if (fx == FX_TAPESTOP || fx == FX_REWIND)
+        return FX.tmix;
+    if (fx == FX_RISER)
+        return FX.rise;
+    return (uint32_t)fx < NFX ? FX.a[fx] : 0.0f;
+}
+void eng_sidechain(float depth, int rate)
+{
+    sc_depth_v = fm_clampf(depth, 0.0f, 1.0f);
+    sc_rate_v = (uint8_t)((uint32_t)rate < NSC ? rate : SC_4);
+}
+void eng_sc_hit(void)
+{
+    push(EV_SC, 0, 0.0f, 0.0f);
+    commit();
+}
+float eng_sc_gain(void) { return FX.sc_g; }
+static void sc_hit(void) { FX.sc_e = 1.0f; }
+static const uint8_t SC_TPB[NSC] = {24, 12, 48, 0};   /* clock ticks a beat (KICK: none) */
+static void sc_tick(int start)           /* (arp_clock) a MIDI clock tick, or START */
+{
+    uint8_t rt = sc_rate_v;
+    if (start) {
+        FX.sc_tick = 0;
+        return;
+    }
+    if (SC_TPB[rt] && FX.sc_tick % SC_TPB[rt] == 0u)
+        sc_hit();
+    FX.sc_tick++;
+}
+
+static inline int16_t tq(float x) { return (int16_t)(fm_clampf(x, -3.99f, 3.99f) * 8192.0f); }
+static inline float tape_at(float pos)
+{
+    uint32_t i0 = (uint32_t)pos, i1;
+    float fr = pos - (float)i0;
+    if (i0 >= TAPE_N)
+        i0 -= TAPE_N;
+    i1 = i0 + 1u >= TAPE_N ? 0u : i0 + 1u;
+    return ((float)tape_buf[i0] * (1.0f - fr) + (float)tape_buf[i1] * fr) * (1.0f / 8192.0f);
+}
+static float tape_behind(float secs)     /* the read position secs behind the write head */
+{
+    float p = (float)FX.tw - secs * (SR * 0.5f);
+    while (p < 0.0f)
+        p += (float)TAPE_N;
+    return p;
+}
+
+/* once a block: the effects switched, their amounts, the gate, the riser, the beat */
+static void fx_block(uint32_t n)
+{
+    static const float GL[NFX] = {0, 0.06f, 0, 0.5f, 0.08f, 0.05f, 0.3f, 0};   /* how fast each comes and goes */
+    uint32_t mask = fx_mask, up = mask & ~FX.prev, down = FX.prev & ~mask, i;
+    float beat;
+    FX.prev = mask;
+    if (up >> FX_REWIND & 1u) {          /* REWIND: from now, back */
+        FX.tmode = TP_REW;
+        FX.rate = -0.6f;
+        FX.trd = tape_behind(0.0f);
+        FX.rw_t = 0.7f * SR;
+    } else if ((up >> FX_TAPESTOP & 1u) && (FX.tmode == TP_LIVE || FX.tmode == TP_BACK)) {
+        FX.tmode = TP_STOP;
+        FX.rate = 1.0f;
+        FX.trd = tape_behind(0.002f);
+    }
+    if ((down >> FX_TAPESTOP & 1u) && FX.tmode == TP_STOP) {   /* let go: it spins back up */
+        if (FX.rate < 0.05f)
+            FX.trd = tape_behind(0.25f);   /* (stopped a long while: from the recent sound) */
+        FX.tmode = TP_SPIN;
+    }
+    for (i = 0; i < NFX; i++)
+        if (GL[i] > 0.0f)
+            FX.a[i] += ((float)(mask >> i & 1u) - FX.a[i]) * GL[i];
+    FX.lo_k = 1.0f + (onepole(220.0f) - 1.0f) * FX.a[FX_LIGHTS];
+    if (mask >> FX_RISER & 1u)
+        FX.rise = fm_minf(1.0f, FX.rise + (float)n / (8.0f * SR));
+    else
+        FX.rise = fm_maxf(0.0f, FX.rise - (float)n / (0.4f * SR));
+    fx_cut = fm_exp2f(4.5f * FX.rise * FX.rise);
+    if (notes != FX.notes_seen) {        /* GATED: each new note opens the gate */
+        FX.notes_seen = notes;
+        FX.gate_t = 0.24f * SR;
+    } else if (FX.gate_t > 0.0f)
+        FX.gate_t -= (float)n;
+    /* the beat (own tempo): the sidechain's hits */
+    beat = SR * 60.0f / (A.bpm > 1.0f ? A.bpm : 120.0f);
+    if (sc_rate_v == SC_8)
+        beat *= 0.5f;
+    else if (sc_rate_v == SC_2)
+        beat *= 2.0f;
+    FX.sc_rel = fm_expf(-1.0f / (fm_minf(0.5f * beat, 0.3f * SR) * 0.35f));
+    if (!eng_clock_ext() && sc_rate_v != SC_KICK) {
+        FX.sc_ph += (float)n / beat;
+        if (FX.sc_ph >= 1.0f) {
+            FX.sc_ph -= (float)(int)FX.sc_ph;
+            sc_hit();
+        }
+    }
+}
+
+/* each sample, at the end: the tape, the effects, the sidechain */
+static inline void fx_sample(float *pl, float *pr)
+{
+    float l = *pl, r = *pr, mono = 0.5f * (l + r), a;
+    FX.half ^= 1u;                       /* the tape records, always (22,050 Hz) */
+    if (FX.half)
+        FX.tacc = mono;
+    else {
+        tape_buf[FX.tw] = tq(0.5f * (FX.tacc + mono));
+        if (++FX.tw >= TAPE_N)
+            FX.tw = 0;
+    }
+    /* VHS: a short line swaying (wow 0.6 Hz, flutter 7 Hz), the highs off, hiss */
+    vhs_l[FX.vw] = l;
+    vhs_r[FX.vw] = r;
+    if ((a = FX.a[FX_VHS]) > 0.002f) {
+        float d, pos, fr, k, xl, xr;
+        uint32_t i0, i1;
+        FX.vph1 += 0.6f / SR;
+        if (FX.vph1 >= 1.0f)
+            FX.vph1 -= 1.0f;
+        FX.vph2 += 7.0f / SR;
+        if (FX.vph2 >= 1.0f)
+            FX.vph2 -= 1.0f;
+        d = 8.0f + a * (0.0045f * (1.0f + fm_sin_turns(FX.vph1)) + 0.0006f * (1.0f + fm_sin_turns(FX.vph2))) * SR;
+        pos = (float)FX.vw + (float)VHS_N - d;
+        if (pos >= (float)VHS_N)
+            pos -= (float)VHS_N;
+        i0 = (uint32_t)pos;
+        fr = pos - (float)i0;
+        i1 = i0 + 1u >= VHS_N ? 0u : i0 + 1u;
+        xl = vhs_l[i0] + fr * (vhs_l[i1] - vhs_l[i0]);
+        xr = vhs_r[i0] + fr * (vhs_r[i1] - vhs_r[i0]);
+        k = 1.0f - 0.82f * a;            /* about 3 kHz at full */
+        FX.vlp_l += k * (xl - FX.vlp_l);
+        FX.vlp_r += k * (xr - FX.vlp_r);
+        l = l + (FX.vlp_l - l) * a + white() * 0.004f * a;
+        r = r + (FX.vlp_r - r) * a + white() * 0.004f * a;
+    }
+    if (++FX.vw >= VHS_N)
+        FX.vw = 0;
+    /* LIGHTS OUT: two poles down to 220 Hz */
+    if (FX.lo_k < 0.999f) {
+        FX.lo_l1 += FX.lo_k * (l - FX.lo_l1);
+        FX.lo_l2 += FX.lo_k * (FX.lo_l1 - FX.lo_l2);
+        FX.lo_r1 += FX.lo_k * (r - FX.lo_r1);
+        FX.lo_r2 += FX.lo_k * (FX.lo_r1 - FX.lo_r2);
+        l = FX.lo_l2 * (1.0f + 0.6f * FX.a[FX_LIGHTS]);
+        r = FX.lo_r2 * (1.0f + 0.6f * FX.a[FX_LIGHTS]);
+    } else {
+        FX.lo_l1 = FX.lo_l2 = l;
+        FX.lo_r1 = FX.lo_r2 = r;
+    }
+    /* WALKIE: 500 Hz .. 2.8 kHz, driven, static */
+    if ((a = FX.a[FX_WALKIE]) > 0.002f) {
+        float x = 0.5f * (l + r), y;
+        FX.wk_hp += 0.069f * (x - FX.wk_hp);   /* (500 Hz) */
+        y = x - FX.wk_hp;
+        FX.wk_l += 0.33f * (y - FX.wk_l);      /* (2.8 kHz) */
+        y = fm_tanhf(FX.wk_l * 4.0f) * 0.3f + white() * 0.012f;
+        l += (y - l) * a;
+        r += (y - r) * a;
+    }
+    /* RISER: noise rising with the filters */
+    if (FX.rise > 0.001f) {
+        float w = white();
+        FX.rn_hp += 0.2f * (w - FX.rn_hp);
+        w = (w - FX.rn_hp) * 0.09f * FX.rise * FX.rise;
+        l += w;
+        r += w;
+    }
+    /* the tape: stopping, spinning up, rewinding, then back to the live sound */
+    if (FX.tmode != TP_LIVE) {
+        float x, g;
+        if (FX.tmode == TP_STOP)
+            FX.rate = fm_maxf(0.0f, FX.rate - 1.0f / (0.9f * SR));
+        else if (FX.tmode == TP_SPIN) {
+            FX.rate += 1.0f / (0.35f * SR);
+            if (FX.rate >= 1.0f) {
+                FX.rate = 1.0f;
+                FX.tmode = TP_BACK;
+            }
+        } else if (FX.tmode == TP_REW) {
+            FX.rate = fm_maxf(-3.0f, FX.rate - 2.4f / (0.45f * SR));
+            FX.rw_t -= 1.0f;
+            if (FX.rw_t <= 0.0f) {
+                FX.rate = 1.0f;
+                FX.trd = tape_behind(0.01f);
+                FX.tmode = TP_BACK;
+            }
+        }
+        FX.trd += FX.rate * 0.5f;
+        if (FX.trd >= (float)TAPE_N)
+            FX.trd -= (float)TAPE_N;
+        else if (FX.trd < 0.0f)
+            FX.trd += (float)TAPE_N;
+        x = tape_at(FX.trd);
+        FX.tlp += (FX.tmode == TP_REW ? 0.25f : 1.0f) * (x - FX.tlp);
+        g = fm_minf(1.0f, fm_fabsf(FX.rate) * 2.5f);
+        if (FX.tmode == TP_BACK) {
+            FX.tmix -= 1.0f / (0.03f * SR);
+            if (FX.tmix <= 0.0f) {
+                FX.tmix = 0.0f;
+                FX.tmode = TP_LIVE;
+            }
+        } else
+            FX.tmix = fm_minf(1.0f, FX.tmix + 1.0f / (0.004f * SR));
+        l += (FX.tlp * g - l) * FX.tmix;
+        r += (FX.tlp * g - r) * FX.tmix;
+    }
+    /* the sidechain: down at each hit, back over half a beat */
+    {
+        float d = sc_depth_v, to;
+        FX.sc_e *= FX.sc_rel;
+        to = 1.0f - d * FX.sc_e;
+        FX.sc_g += (to - FX.sc_g) * (to < FX.sc_g ? 0.05f : 0.01f);
+        l *= FX.sc_g;
+        r *= FX.sc_g;
+    }
+    *pl = l;
+    *pr = r;
+}
+
 void eng_render(int32_t *lr, uint32_t n, float gain)
 {
     uint32_t c0, s, i, c;
@@ -1239,6 +1500,7 @@ void eng_render(int32_t *lr, uint32_t n, float gain)
     params_glide();
     events();
     arp_block(n);
+    fx_block(n);
     /* the shared movement, per chunk: the vibrato, the tape's wow */
     blk_n = n;
     for (c = 0; c * CH < n; c++) {
@@ -1270,7 +1532,11 @@ void eng_render(int32_t *lr, uint32_t n, float gain)
     }
     ens = P.press == PRESS_POWER ? fm_minf(1.0f, P.ens + 0.6f * pmax * P.pamt) : P.ens;
     for (c0 = 0; c0 < n; c0 += CH) {
-        float L[CH], R[CH], ensd[3], rv_mod[8], dsend = P.dsend, dfb = P.dfb, wet = P.wet;
+        float L[CH], R[CH], ensd[3], rv_mod[8], dsend = P.dsend, dfb = P.dfb, wet = P.wet, gw;
+        dsend += (0.55f - dsend) * FX.a[FX_ECHO];   /* ECHO: the delay thrown */
+        dfb += (0.72f - dfb) * FX.a[FX_ECHO];
+        gw = fm_maxf(FX.a[FX_LIGHTS] * 0.7f, FX.a[FX_GATED] * 0.85f);   /* LIGHTS, GATED: more room */
+        wet += (0.8f - wet) * gw;
         uint32_t m = n - c0 < CH ? n - c0 : CH;
         world_chunk();
         for (s = 0; s < m; s++) {
@@ -1462,12 +1728,19 @@ void eng_render(int32_t *lr, uint32_t n, float gain)
             }
             wl = 0.45f * (y[0] - y[2] + y[4] + y[6]);
             wr = 0.45f * (y[1] + y[3] - y[5] + y[7]);
+            {                            /* GATED: the room cut off a moment after each note */
+                float to = 1.0f - FX.a[FX_GATED] * (FX.gate_t > 0.0f ? 0.0f : 1.0f);
+                FX.gate_g += (to - FX.gate_g) * (to < FX.gate_g ? 0.006f : 0.05f);
+                wl *= FX.gate_g;
+                wr *= FX.gate_g;
+            }
             E.rv_hpl += 0.008f * (wl - E.rv_hpl);
             wl -= E.rv_hpl;
             E.rv_hpr += 0.008f * (wr - E.rv_hpr);
             wr -= E.rv_hpr;
             l = l * (1.0f - 0.45f * wet) + wl * wet * 1.5f;
             r = r * (1.0f - 0.45f * wet) + wr * wet * 1.5f;
+            fx_sample(&l, &r);
             /* the master: a limiter that turns it down (fast down, slow back up: no distortion), then a soft edge at
              * the very top for what slips through */
             {

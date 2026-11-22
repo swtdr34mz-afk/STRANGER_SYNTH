@@ -675,7 +675,7 @@ static void film_init(void)
 
 static void film_step(void)              /* the movement, a frame */
 {
-    uint32_t i, rain_n = (uint32_t)KM[3] * NDROPS / 127u, th = eng_thunder(), nn = eng_notes();
+    uint32_t i, rain_n = (uint32_t)ui.rain_now * NDROPS / 127u, th = eng_thunder(), nn = eng_notes();
     film.sx += film.scene == SC_FLIGHT ? 1.6f : 1.0f;
     for (i = 0; i < rain_n; i++) {
         film.drop_y[i] += film.drop_v[i];
@@ -737,7 +737,7 @@ static void film_step(void)              /* the movement, a frame */
 
 static void film_frame(uint32_t now)
 {
-    uint32_t i, rain_n = (uint32_t)KM[3] * NDROPS / 127u, since;
+    uint32_t i, rain_n = (uint32_t)ui.rain_now * NDROPS / 127u, since;
     int32_t y;
     if (now - film.cut_at >= film.len) {
 #ifdef PLAT_HOST

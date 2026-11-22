@@ -10,9 +10,9 @@ and [felucca-bsp](https://github.com/hugelton/felucca-bsp).
 
 1. Scaffold: name, splash, IDs, hub files (done: v0.0.1, still sounds like OFFWORLD)
 2. LOW SPLIT + arpeggiator (synced to MIDI clock) (done: v0.0.2)
-3. Presets in the style of classic 80s poly and mono synths
-4. CHORD mode with sidechain, TONE FOLLOW (to the low split or the chords)
-5. Performance FX: tape stop, VHS wobble, tape rewind, gated reverb, tape echo throw, lights out, walkie, riser
+3. Presets in the style of classic 80s poly and mono synths (done: v0.0.3)
+4. CHORD mode with sidechain, TONE FOLLOW (to the low split or the chords) (done: v0.0.3)
+5. Performance FX: tape stop, VHS wobble, tape rewind, gated reverb, tape echo throw, lights out, walkie, riser (done: v0.0.3)
 6. The screen: a small town at night, the mirror world
 7. SIX MACHINES sends MIDI clock and its kick as the sidechain trigger
 
@@ -28,3 +28,17 @@ GitHub Actions builds the `.fwsc` on every push (Actions > the run > Artifacts) 
 - **LFO**: the ARP page. K1 RATE (1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32), K2 PATTERN (UP, DOWN, UP-DOWN, PLAYED, RANDOM),
   K3 OCTAVES (1..4), K4 GATE (5..100 %). SELECT on this page: the tempo (40..240 BPM).
 - **MIDI clock** in (USB or the TRS jack): the arp follows it (START from the first step, STOP silent); the page shows EXT CLOCK.
+
+## Sounds, chords, performance (v0.0.3)
+
+- **Ten presets** in the manner of classic 80s analogues (our own names): NIGHT SEQUENCE, FIVE BRASS, CHORUS STRINGS,
+  MODEL BASS, OB BRASS, SIX PAD, MONO ARP BASS, SYNC LEAD, MIRROR CHOIR, THE DARK BELOW.
+- **The knobs (MAIN)**: K1 SHAPE (PLUCK, STAB, BRASS, SWELL, PAD), K2 DRIFT (CLEAN, ANALOG, ENSEMBLE, WIDE, TAPE),
+  K3 SPACE (ROOM .. FREEZE), K4 FILTER (DARK, WARM, OPEN, BRIGHT, SCREAM). OFFWORLD's rain is gone.
+- **CHORD** (ENV): K1 CHORD (OFF, MINOR, MAJOR, MIN7, MAJ7, SUS2, SUS4, POWER, MIN9, ADD9) from one finger (the low split,
+  or every key with the split off; with ARP the arp plays the chord), K2 SPREAD (CLOSE, OPEN, WIDE), K3 SIDECHAIN depth,
+  K4 SC RATE (1/4, 1/8, 1/2, KICK: a kick on MIDI channel 10, note 36).
+- **FOLLOW CHORD** (SEL page, FOLLOW): the right hand's white keys play the chord's notes.
+- **PERFORM** (FX tapped; or FX held + a key on any page): the lowest eight white keys switch the effects:
+  TAPE STOP, VHS, REWIND (once), GATED reverb, ECHO throw, LIGHTS OUT, WALKIE, RISER. The knobs stay the macros.
+- **REC** tapped: TAPE STOP (again: it spins back up). REC held 1 s: every note off.

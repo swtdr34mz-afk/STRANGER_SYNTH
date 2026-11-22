@@ -1,0 +1,95 @@
+# STRANGER SYNTH: CHORD (ENV), FOLLOW CHORD, the SIDECHAIN, PERFORM (FX) and TAPE STOP (REC)
+wait 3200
+tapkey w0 100
+wait 400
+# CHORD: one finger, a minor chord
+tap ENV
+expect page 5
+turn K1 2
+expect chord 1
+key 4 down 100
+wait 100
+expect voices 3
+key 4 up
+wait 1500
+# the low split, the melody on the chord's notes (white keys): A minor from A
+tap SEL
+turn K1 2
+turn K4 2
+expect follow 3
+tap SEL
+key 4 down 100
+wait 50
+expect root 9
+key 7 down 100
+wait 30
+expect kp7 57
+key 7 up
+key 9 down 100
+wait 30
+expect kp9 60
+key 9 up
+key 11 down 100
+wait 30
+expect kp11 64
+key 11 up
+key 4 up
+wait 1500
+# the SIDECHAIN on a kick from outside (channel 10, note 36)
+tap ENV
+turn K3 60
+turn K4 6
+expect sc_rate 3
+key 4 down 100
+wait 200
+midi 99 24 7F
+wait 8
+expect sc_duck 1
+wait 600
+expect sc_duck 0
+key 4 up
+tap ENV
+# PERFORM: FX, the lowest white keys are the pads
+tap FX
+expect page 4
+key 14 down 100
+wait 100
+key 0 down 100
+wait 30
+key 0 up
+expect fx 1
+wait 400
+expect fx_busy 1
+key 0 down 100
+wait 30
+key 0 up
+expect fx 0
+wait 800
+expect fx_busy 0
+# REWIND (the third pad): once
+wait 300
+key 4 down 100
+wait 30
+key 4 up
+wait 100
+expect fx_busy 1
+wait 1200
+expect fx_busy 0
+# VHS and GATED on, on the screen
+key 2 down 100
+wait 30
+key 2 up
+key 6 down 100
+wait 30
+key 6 up
+expect fx 10
+wait 500
+shot perform.png
+key 14 up
+# REC: TAPE STOP
+tap FX
+tap REC
+expect fx 11
+wait 600
+tap REC
+expect fx 10

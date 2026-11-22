@@ -25,7 +25,7 @@
 #include "fastmath.h"
 #include "engine.h"
 
-#define SET_MAGIC 0x31595353u            /* "SSY1": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
+#define SET_MAGIC 0x33595353u            /* "SSY3": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
 #define NCUE 8
 #define CUE_NOTES 6
 typedef struct {
@@ -56,6 +56,8 @@ typedef struct {
     uint8_t arp_rate, arp_pat, arp_oct;  /* RATE_*, ARP_*, octaves 1..4 */
     uint8_t arp_gate;                    /* 5 .. 100 % of a step */
     uint8_t bpm;                         /* its own tempo 40 .. 240 */
+    uint8_t chord, spread;               /* CHORD: CHORDS (0 off), its voicing SP_* */
+    uint8_t sc_depth, sc_rate;           /* the SIDECHAIN: 0..100 %, SC_* */
     uint8_t rsv[2];
 } settings_t;
 
@@ -64,7 +66,7 @@ static uint8_t set_dirty;
 static uint32_t dirty_at;
 
 #define DEEP_ID 999                      /* the drone's deep root */
-#define MIDI_ID 300                      /* MIDI notes: 300 + note (+100, +200: EPIC's fifth and octave) */
+#define MIDI_ID 1100                     /* MIDI notes: 1100 + note (+100, +200: EPIC's fifth and octave) */
 
 #define C_CYAN RGB(60, 230, 255)
 #define C_MAG RGB(255, 60, 170)
@@ -90,12 +92,30 @@ static const scale_t SCALES[] = {
     {"ARABIC", 7, {0, 1, 4, 5, 7, 8, 11}},
 };
 #define NSCALE (sizeof SCALES / sizeof SCALES[0])
-enum { FOLLOW_OFF, FOLLOW_SNAP, FOLLOW_WHITE, NFOLLOW };
+/* CHORD: one finger, a chord (the low split's keys, or every key with the split off) */
+typedef struct {
+    const char *name;
+    uint8_t n;
+    uint8_t iv[4];
+} chord_t;
+static const chord_t CHORDS[] = {
+    {"OFF", 1, {0}},            {"MINOR", 3, {0, 3, 7}}, {"MAJOR", 3, {0, 4, 7}}, {"MIN7", 4, {0, 3, 7, 10}},
+    {"MAJ7", 4, {0, 4, 7, 11}}, {"SUS2", 3, {0, 2, 7}},  {"SUS4", 3, {0, 5, 7}},  {"POWER", 3, {0, 7, 12}},
+    {"MIN9", 4, {0, 3, 7, 14}}, {"ADD9", 4, {0, 4, 7, 14}},
+};
+#define NCHORD (sizeof CHORDS / sizeof CHORDS[0])
+enum { SP_CLOSE, SP_OPEN, SP_WIDE, NSPREAD };
+static const char *const SPREAD_NAME[NSPREAD] = {"CLOSE", "OPEN", "WIDE"};
+static const char *const SCR_NAME[NSC] = {"1/4", "1/8", "1/2", "KICK"};
+/* the PERFORM effects, as the pads show them */
+static const char *const FX_NAME[NFX] = {"TAPE STOP", "VHS", "REWIND", "GATED", "ECHO", "LIGHTS OUT", "WALKIE", "RISER"};
+static const char *const FX_SHORT[NFX] = {"STOP", "VHS", "REW", "GATE", "ECHO", "DARK", "TALK", "RISE"};
+enum { FOLLOW_OFF, FOLLOW_SNAP, FOLLOW_WHITE, FOLLOW_CHORD, NFOLLOW };
 /* GLIDE's modes: POLY every note its own voice, gliding from the last note of its side; MONO one voice a side, a new
  * key slides it there (no new attack while one sounds), always gliding; LEGATO as MONO, but gliding only legato */
 enum { GM_POLY, GM_MONO, GM_LEGATO, NGMODE };
 static const char *const GMODE_NAME[NGMODE] = {"POLY", "MONO", "LEGATO"};
-static const char *const FOLLOW_NAME[NFOLLOW] = {"OFF", "SNAP", "WHITE"};
+static const char *const FOLLOW_NAME[NFOLLOW] = {"OFF", "SNAP", "WHITE", "CHORD"};
 static const char *const PRESS_NAME[NPRESS] = {"OFF", "FILTER", "SWELL", "POWER", "VIBRATO"};
 static const char *const NOTE_NAME[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
@@ -147,6 +167,11 @@ static void settings_defaults(void)
     set.arp_oct = 1;
     set.arp_gate = 50;
     set.bpm = 110;
+    set.chord = 0;
+    set.spread = 0;
+    set.sc_depth = 0;
+    set.sc_rate = SC_4;
+    set.city = 0;                        /* (OFFWORLD's city sounds: not here) */
 }
 
 static int cues_ok(void)
@@ -172,7 +197,8 @@ static int settings_ok(void)
            set.city <= 100u && set.story <= 1u && set.logs <= 1u && set.cue_fade <= 100u && set.cue_hold >= 4u &&
            set.cue_hold <= 60u && set.cue_auto <= 1u && cues_ok() && set.arp <= 1u && set.arp_rate < NRATE &&
            set.arp_pat < NARPPAT && set.arp_oct >= 1u && set.arp_oct <= 4u && set.arp_gate >= 5u && set.arp_gate <= 100u &&
-           set.bpm >= 40u && set.bpm <= 240u;
+           set.bpm >= 40u && set.bpm <= 240u && set.chord < NCHORD && set.spread < NSPREAD &&
+           set.sc_depth <= 100u && set.sc_rate < NSC;
 }
 
 static void settings_load(void)
@@ -268,7 +294,7 @@ static void knobs_from_settings(void)
 }
 
 /* ---------------------------------------------------------------------- UI --- */
-enum { PG_MAIN, PG_SPLIT, PG_PRESS, PG_GLIDE, PG_WORLD, PG_CUES, PG_ARP, NPAGE };
+enum { PG_MAIN, PG_SPLIT, PG_PRESS, PG_GLIDE, PG_PERF, PG_CHORD, PG_ARP, NPAGE };
 enum { SIDE_L, SIDE_R };
 static struct {
     char msg[2][24];
@@ -284,7 +310,9 @@ static struct {
     uint8_t drone, lowhold, page;
     uint8_t root;                        /* the melody's root: the low split's note, 0..11 */
     float deep;                          /* the deep root's pitch (0: none) */
-    uint32_t rec_t, home_t, sel_t, arp_t;
+    uint32_t rec_t, home_t, sel_t, arp_t, fx_t, rew_t;
+    uint8_t fx_used;
+    uint32_t fx;                         /* PERFORM: the effects on (FX_*) */
     uint8_t sel_used;
     uint32_t enc_at[NE];
     int32_t enc_acc[4];
@@ -391,6 +419,8 @@ static int32_t accel(int k, int32_t e, int32_t mid, int32_t fast)
     return e;
 }
 
+static int chord_key(uint32_t k);
+static uint32_t chord_iv(float *iv);
 /* ------------------------------------------------------------------ notes --- */
 static int split_on(void) { return set.split_oct != 0u; }
 static int side_of(uint32_t k) { return split_on() && k < set.split_key ? SIDE_L : SIDE_R; }
@@ -408,6 +438,35 @@ static int is_white(uint32_t k)
         if (WK[i] == k)
             return 1;
     return 0;
+}
+
+/* the chord the melody follows: its notes in an octave from the root, low to high (CHORD off: the scale's triad) */
+static uint32_t chord_tones(uint8_t *tn)
+{
+    uint32_t i, j, n;
+    if (set.chord) {
+        const chord_t *ch = &CHORDS[set.chord];
+        for (i = n = 0; i < ch->n; i++) {
+            uint8_t t = (uint8_t)(ch->iv[i] % 12u);
+            for (j = 0; j < n && tn[j] != t; j++)
+                ;
+            if (j == n)
+                tn[n++] = t;
+        }
+    } else {
+        const scale_t *sc = &SCALES[set.scale % NSCALE];
+        tn[0] = 0;
+        tn[1] = sc->st[2 % sc->n];
+        tn[2] = sc->st[4 % sc->n];
+        n = 3;
+    }
+    for (i = 1; i < n; i++)              /* low to high */
+        for (j = i; j > 0 && tn[j] < tn[j - 1]; j--) {
+            uint8_t t = tn[j];
+            tn[j] = tn[j - 1];
+            tn[j - 1] = t;
+        }
+    return n;
 }
 
 /* what key k plays now: 0 = nothing (a black key in WHITE) */
@@ -429,6 +488,26 @@ static int key_pitch(uint32_t k, float *p)
             if (sc->st[i] <= rel)
                 best = sc->st[i];
         *p = (float)(n - rel + best);
+        return 1;
+    }
+    if (set.follow == FOLLOW_CHORD) {    /* the chord's notes on the white keys, up from the root */
+        uint8_t tn[4];
+        uint32_t j, first = 0, d = 0, nt = chord_tones(tn);
+        int32_t p0, base;
+        if (!is_white(k))
+            return 0;
+        for (j = set.split_key; j < NKEYS; j++)
+            if (is_white(j)) {
+                first = j;
+                break;
+            }
+        for (j = first; j < k; j++)
+            d += (uint32_t)is_white(j);
+        p0 = 53 + (int32_t)first + 12 * set.octave;
+        base = p0 - (((p0 - (int32_t)ui.root) % 12 + 12) % 12);
+        if (p0 - base > 6)
+            base += 12;
+        *p = (float)(base + 12 * (int32_t)(d / nt) + tn[d % nt]);
         return 1;
     }
     if (set.follow == FOLLOW_WHITE) {    /* the scale on the white keys, from the root near the first one */
@@ -476,9 +555,20 @@ static void arp_push(void)               /* the arp's notes, in the order they w
             ks[j] = ks[j - 1];
             ks[j - 1] = t;
         }
-    for (i = 0; i < n; i++) {
-        p[i] = ui.kp[ks[i]];
-        v[i] = (float)ui.kvel[ks[i]] / 127.0f;
+    {                                    /* each key's note, or with CHORD its chord's notes */
+        uint32_t m = 0;
+        for (i = 0; i < n; i++) {
+            float iv[4];
+            uint32_t c = 1, q;
+            iv[0] = 0.0f;
+            if (chord_key(ks[i]))
+                c = chord_iv(iv);
+            for (q = 0; q < c && m < ARP_MAX; q++) {
+                p[m] = ui.kp[ks[i]] + iv[q];
+                v[m++] = (float)ui.kvel[ks[i]] / 127.0f;
+            }
+        }
+        n = m;
     }
     eng_arp_notes(p, v, (int)n);
 }
@@ -508,15 +598,34 @@ static float fifth_of(uint32_t k, float p)
     return (float)best;
 }
 
-/* a key's notes (the root, and with EPIC the fifth and the octave) */
+/* CHORD on this key: its notes, voiced (OPEN: the second up an octave; WIDE: the root an octave down added) */
+static int chord_key(uint32_t k) { return set.chord && (!split_on() || k < set.split_key); }
+static uint32_t chord_iv(float *iv)
+{
+    const chord_t *ch = &CHORDS[set.chord];
+    uint32_t i, n = ch->n;
+    for (i = 0; i < n; i++)
+        iv[i] = (float)ch->iv[i];
+    if (set.spread == SP_OPEN && n > 1u)
+        iv[1] += 12.0f;
+    else if (set.spread == SP_WIDE) {
+        if (n > 3u)
+            n = 3u;
+        iv[n++] = -12.0f;
+    }
+    return n;
+}
+/* a key's notes (the root; with EPIC the fifth and the octave; with CHORD the chord) */
 static void notes_on(uint32_t k, float p, float v, float from, float g)
 {
-    static const float VS[3] = {1.0f, 0.85f, 0.8f};
-    float iv[3];
+    static const float VS[4] = {1.0f, 0.85f, 0.8f, 0.8f};
+    float iv[4];
     uint32_t i, n = set.epic ? 3u : 1u;
     iv[0] = 0.0f;
     iv[1] = fifth_of(k, p) - p;
     iv[2] = 12.0f;
+    if (chord_key(k))
+        n = chord_iv(iv);
     for (i = 0; i < n; i++) {
         if (from != p)
             eng_note_glide((int)(k + 100u * i), p + iv[i], v * VS[i], from + iv[i], g);
@@ -526,11 +635,13 @@ static void notes_on(uint32_t k, float p, float v, float from, float g)
 }
 static void notes_move(uint32_t m, uint32_t k, float p, float v, float g)
 {
-    float iv[3];
+    float iv[4];
     uint32_t i, n = set.epic ? 3u : 1u;
     iv[0] = 0.0f;
     iv[1] = fifth_of(k, p) - p;
     iv[2] = 12.0f;
+    if (chord_key(k))
+        n = chord_iv(iv);
     for (i = 0; i < n; i++)
         eng_note_move((int)(m + 100u * i), (int)(k + 100u * i), p + iv[i], v, g, 0);
 }
@@ -579,6 +690,7 @@ static void key_stop(uint32_t k)
     eng_note_off((int)k);
     eng_note_off(100 + (int)k);
     eng_note_off(200 + (int)k);
+    eng_note_off(300 + (int)k);
     ui.sounding &= ~(1u << k);
     ui.prs[k] = 0;
     if (ui.mono[side] == k + 1u)
@@ -712,8 +824,8 @@ static void all_off(void)
     arp_push();
 }
 
-/* the ARPEGGIATOR on / off: what sounds lets go, the keys still down start again the new way */
-static void arp_toggle(void)
+/* a change in how keys play (ARP, CHORD): what sounds lets go, the keys still down start again the new way */
+static uint32_t replay_begin(void)
 {
     uint32_t k, held = ui.keys;
     for (k = 0; k < NKEYS; k++)
@@ -721,15 +833,63 @@ static void arp_toggle(void)
             key_stop(k);
     ui.latched = 0;
     ui.mono[0] = ui.mono[1] = 0;
-    set.arp = (uint8_t)!set.arp;
-    arp_cfg();
+    return held;
+}
+static void replay_end(uint32_t held)
+{
+    uint32_t k;
     for (k = 0; k < NKEYS; k++)
         if (held >> k & 1u)
             key_press(k, ui.kvel[k] ? ui.kvel[k] : 100u, held & ((1u << k) - 1u));
     arp_push();
     dirty();
+    ui.head_redraw = ui.redraw = 1;
+}
+static void arp_toggle(void)
+{
+    uint32_t held = replay_begin();
+    set.arp = (uint8_t)!set.arp;
+    arp_cfg();
+    replay_end(held);
     app_say("ARP", set.arp ? "ON" : "OFF");
-    ui.head_redraw = 1;
+}
+static void chord_change(int k, int32_t v)
+{
+    uint32_t held = replay_begin();
+    char t[16];
+    if (k == 0)
+        set.chord = (uint8_t)v;
+    else
+        set.spread = (uint8_t)v;
+    replay_end(held);
+    t[0] = 0;
+    text_cat(t, k == 0 ? CHORDS[v].name : SPREAD_NAME[v]);
+    app_say(k == 0 ? "CHORD" : "SPREAD", t);
+}
+
+/* PERFORM: the effects switched (REWIND: once, its bit on a moment) */
+static void fx_send(void) { eng_fx(ui.fx | (ui.rew_t ? 1u << FX_REWIND : 0u)); }
+static void fx_toggle(uint32_t i)
+{
+    if (i == FX_REWIND) {
+        ui.rew_t = plat_ms() | 1u;
+        fx_send();
+        app_say("REWIND", "");
+        return;
+    }
+    ui.fx ^= 1u << i;
+    fx_send();
+    app_say(FX_NAME[i], ui.fx >> i & 1u ? "ON" : "OFF");
+    ui.redraw = 1;
+}
+static int fx_pad(uint32_t k)            /* the PERFORM pads: the lowest eight white keys (-1: not one) */
+{
+    static const uint8_t WK[16] = PLAT_WHITE_KEYS;
+    uint32_t i;
+    for (i = 0; i < NFX; i++)
+        if (WK[i] == k)
+            return (int)i;
+    return -1;
 }
 
 /* ------------------------------------------------------------------- cues --- */
@@ -869,26 +1029,26 @@ static void sound(void)
     m[0] = KM[0];
     m[1] = KM[1];
     m[2] = KM[2];
-    m[3] = ui.rain_now = rain_eff();     /* RAIN as it plays: the knob, or with STORY the night's share of it */
+    m[3] = KM[3];                        /* FILTER */
+    ui.rain_now = 0;                     /* (no rain on this side) */
     eng_sound(set.preset, m, (float)set.tone / 50.0f, (float)set.vib / 100.0f, set.press, (float)set.pamt / 100.0f);
 }
 
 static void weather(void)                /* the night moves on: the rain with it */
 {
-    if (rain_eff() != ui.rain_now)
-        sound();
+    (void)rain_eff;
 }
 
 /* ------------------------------------------------------------------ pages --- */
 /* the knobs of SPLIT and PRESSURE: a value, its range, its text */
-static const char *const PAGE_NAME[NPAGE] = {"MAIN", "SPLIT", "PRESSURE", "GLIDE", "WORLD", "CUES", "ARP"};
+static const char *const PAGE_NAME[NPAGE] = {"MAIN", "SPLIT", "PRESSURE", "GLIDE", "PERFORM", "CHORD", "ARP"};
 static const char *const RATE_NAME[NRATE] = {"1/4", "1/8", "1/8T", "1/16", "1/16T", "1/32"};
 static const char *const PAT_NAME[NARPPAT] = {"UP", "DOWN", "UP-DOWN", "PLAYED", "RANDOM"};
 static const char *const PK_NAME[6][4] = {{"SPLIT", "POINT", "SCALE", "FOLLOW"},
                                           {"PRESSURE", "AMOUNT", "TONE", "VIBRATO"},
                                           {"LOW GLIDE", "LOW MODE", "GLIDE", "MODE"},
-                                          {"CITY", "STORY", "LOGS", "TIME"},
-                                          {"CUE", "FADE", "HOLD", "AUTO"},
+                                          {"SHAPE", "DRIFT", "SPACE", "FILTER"},
+                                          {"CHORD", "SPREAD", "SIDECHAIN", "SC RATE"},
                                           {"RATE", "PATTERN", "OCTAVES", "GATE"}};
 static void cue_play(uint32_t c);
 static void world_level(void);
@@ -901,10 +1061,10 @@ static int32_t pk_get(int pg, int k)
         return k == 0 ? set.split_oct : k == 1 ? set.split_key : k == 2 ? set.scale : set.follow;
     if (pg == PG_GLIDE)
         return k == 0 ? set.glide_l : k == 1 ? set.mode_l : k == 2 ? set.glide_h : set.mode_h;
-    if (pg == PG_WORLD)
-        return k == 0 ? set.city : k == 1 ? set.story : k == 2 ? set.logs : story_step();
-    if (pg == PG_CUES)
-        return k == 0 ? ui.cue_sel : k == 1 ? set.cue_fade : k == 2 ? set.cue_hold : set.cue_auto;
+    if (pg == PG_PERF)
+        return KM[k];
+    if (pg == PG_CHORD)
+        return k == 0 ? set.chord : k == 1 ? set.spread : k == 2 ? set.sc_depth : set.sc_rate;
     if (pg == PG_ARP)
         return k == 0 ? set.arp_rate : k == 1 ? set.arp_pat : k == 2 ? set.arp_oct : set.arp_gate;
     return k == 0 ? set.press : k == 1 ? set.pamt : k == 2 ? set.tone : set.vib;
@@ -912,9 +1072,9 @@ static int32_t pk_get(int pg, int k)
 
 static void pk_range(int pg, int k, int32_t *lo, int32_t *hi)
 {
-    static const int8_t LO[6][4] = {{0, 1, 0, 0}, {0, 0, -50, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 4, 0}, {0, 0, 1, 5}};
+    static const int8_t LO[6][4] = {{0, 1, 0, 0}, {0, 0, -50, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 1, 5}};
     static const int8_t HI[6][4] = {{3, NKEYS - 1, NSCALE - 1, NFOLLOW - 1}, {NPRESS - 1, 100, 50, 100},
-                                    {100, NGMODE - 1, 100, NGMODE - 1}, {100, 1, 1, 71}, {NCUE, 100, 60, 1},
+                                    {100, NGMODE - 1, 100, NGMODE - 1}, {127, 127, 127, 127}, {NCHORD - 1, NSPREAD - 1, 100, NSC - 1},
                                     {NRATE - 1, NARPPAT - 1, 4, 100}};
     *lo = LO[pg - 1][k];
     *hi = HI[pg - 1][k];
@@ -949,43 +1109,18 @@ static void pk_text(int pg, int k, char *t)
             text_cat(t, SCALES[v].name);
         else
             text_cat(t, FOLLOW_NAME[v]);
-    } else if (pg == PG_WORLD) {
-        if (k == 0) {
+    } else if (pg == PG_CHORD) {
+        if (k == 0)
+            text_cat(t, CHORDS[v].name);
+        else if (k == 1)
+            text_cat(t, SPREAD_NAME[v]);
+        else if (k == 2) {
             int_text(v, t);
             text_cat(t, "%");
-        } else if (k == 3) {             /* the night's clock, 10 minutes a step from 19:00 */
-            int32_t h = (19 + v / 6) % 24, mi = (v % 6) * 10;
-            t[0] = (char)('0' + h / 10);
-            t[1] = (char)('0' + h % 10);
-            t[2] = ':';
-            t[3] = (char)('0' + mi / 10);
-            t[4] = '0';
-            t[5] = 0;
         } else
-            text_cat(t, v ? "ON" : "OFF");
-    } else if (pg == PG_CUES) {
-        if (k == 0) {
-            if (!v)
-                text_cat(t, "STOP");
-            else {
-                text_cat(t, "CUE ");
-                int_text(v, t + 4);
-                if (!set.cue_n[v - 1])
-                    text_cat(t, " -");
-            }
-        } else if (k == 1) {
-            uint32_t ds = (uint32_t)(3.0f + (float)(v * v) * 0.0297f);   /* tenths: 0.3 .. 30 s */
-            int_text((int32_t)(ds / 10u), t);
-            if (ds < 100u) {
-                char d[3] = {'.', (char)('0' + ds % 10u), 0};
-                text_cat(t, d);
-            }
-            text_cat(t, " S");
-        } else if (k == 2) {
-            int_text(v, t);
-            text_cat(t, " S");
-        } else
-            text_cat(t, v ? "ON" : "OFF");
+            text_cat(t, SCR_NAME[v]);
+    } else if (pg == PG_PERF) {
+        int_text(v, t);
     } else if (pg == PG_GLIDE) {
         if (k & 1)
             text_cat(t, GMODE_NAME[v]);
@@ -1049,33 +1184,16 @@ static void pk_set(int pg, int k, int32_t v)
         }
         if (k <= 1)
             holds_changed();
-    } else if (pg == PG_WORLD) {
-        if (k == 0) {
-            set.city = (uint8_t)v;
-            world_level();
-        } else if (k == 1) {
-            set.story = (uint8_t)v;
-            sound();
+    } else if (pg == PG_CHORD) {
+        if (k == 0 || k == 1) {          /* a new chord: what sounds lets go, the keys down start again */
+            chord_change(k, v);
+            return;
         }
-        else if (k == 2)
-            set.logs = (uint8_t)v;
-        else {
-            story_set(v);
-            sound();
-        }
-    } else if (pg == PG_CUES) {
-        if (k == 0) {
-            ui.cue_sel = (uint8_t)v;
-            cue_play((uint32_t)v);       /* the cue picked plays, sliding from the last (0: they stop) */
-        } else if (k == 1)
-            set.cue_fade = (uint8_t)v;
-        else if (k == 2)
-            set.cue_hold = (uint8_t)v;
-        else {
-            set.cue_auto = (uint8_t)v;
-            if (v && !ui.cue_cur)
-                cue_play(0xFFu);         /* AUTO: from the first cue there is */
-        }
+        if (k == 2)
+            set.sc_depth = (uint8_t)v;
+        else
+            set.sc_rate = (uint8_t)v;
+        eng_sidechain((float)set.sc_depth / 100.0f, set.sc_rate);
     } else if (pg == PG_GLIDE) {
         if (k == 0)
             set.glide_l = (uint8_t)v;
@@ -1107,8 +1225,7 @@ static void page_knob(int k, int32_t e)
 {
     int pg = ui.page;
     int32_t lo, hi, v = pk_get(pg, k), list = (pg == PG_SPLIT && k != 1) || (pg == PG_PRESS && k == 0) || (pg == PG_GLIDE && (k & 1)) ||
-                                                 (pg == PG_WORLD && (k == 1 || k == 2)) || (pg == PG_CUES && (k == 0 || k == 3)) ||
-                                                 (pg == PG_ARP && k < 3);
+                                                 (pg == PG_CHORD && k != 2) || (pg == PG_ARP && k < 3);
     pk_range(pg, k, &lo, &hi);
     if (list) {                          /* a list: two detents a step */
         ui.enc_acc[k] += e;
@@ -1138,7 +1255,7 @@ static void knob(int k, int32_t e)
     const macro_t *mc = &MACROS[k];
     int32_t p, v;
     int zb, za;
-    if (ui.page != PG_MAIN) {
+    if (ui.page != PG_MAIN && ui.page != PG_PERF) {   /* (PERFORM: the macros, as MAIN) */
         page_knob(k, e);
         return;
     }
@@ -1222,7 +1339,10 @@ static void input(void)
             int v = touch_vel(k);
             if (v <= 0)
                 v = 100;
-            if (btn >> B_SEL & 1u) {     /* SEL held: the split here (this key the right's first) */
+            if (((btn >> B_FX & 1u) || ui.page == PG_PERF) && fx_pad(k) >= 0) {   /* the PERFORM pads */
+                fx_toggle((uint32_t)fx_pad(k));
+                ui.fx_used = 1;
+            } else if (btn >> B_SEL & 1u) {     /* SEL held: the split here (this key the right's first) */
                 if (k >= 1u) {
                     char t[8];
                     if (!set.split_oct)
@@ -1276,10 +1396,12 @@ static void input(void)
             ui.rec_t = now;
         else if (k == B_SAVE)
             ui.save_t = now;
-        else if (k == B_FX)
-            page_go(ui.page == PG_WORLD ? PG_MAIN : PG_WORLD);
+        else if (k == B_FX) {
+            ui.fx_t = now;
+            ui.fx_used = 0;
+        }
         else if (k == B_ENV)
-            page_go(ui.page == PG_CUES ? PG_MAIN : PG_CUES);
+            page_go(ui.page == PG_CHORD ? PG_MAIN : PG_CHORD);
         else if (k == B_LFO)
             page_go(ui.page == PG_ARP ? PG_MAIN : PG_ARP);
         else if (k == B_HOME) {
@@ -1301,6 +1423,15 @@ static void input(void)
         else if (k == B_EDIT)
             page_go(ui.page == PG_GLIDE ? PG_MAIN : PG_GLIDE);
     }
+    if (ui.fx_t && !(btn >> B_FX & 1u)) {   /* FX let go: the PERFORM page (again: MAIN), unless it played a pad */
+        ui.fx_t = 0;
+        if (!ui.fx_used)
+            page_go(ui.page == PG_PERF ? PG_MAIN : PG_PERF);
+    }
+    if (ui.rew_t && now - (ui.rew_t & ~1u) > 60u) {   /* REWIND's moment over */
+        ui.rew_t = 0;
+        fx_send();
+    }
     if (ui.sel_t && !(btn >> B_SEL & 1u)) {   /* SEL let go: the SPLIT page (again: MAIN), unless it set the split */
         ui.sel_t = 0;
         if (!ui.sel_used)
@@ -1310,7 +1441,7 @@ static void input(void)
         if (!(btn >> B_SAVE & 1u)) {
             ui.save_t = 0;
             cue_store();
-        } else if (ui.page == PG_CUES && now - ui.save_t >= 1000u) {
+        } else if (0 && now - ui.save_t >= 1000u) {
             uint32_t c;
             ui.save_t = 0;
             for (c = 0; c < NCUE; c++)
@@ -1336,9 +1467,7 @@ static void input(void)
     if (ui.rec_t) {
         if (!(btn >> B_REC & 1u)) {      /* a tap: MEMORY, the last seconds frozen / let go */
             ui.rec_t = 0;
-            ui.memory = (uint8_t)!ui.memory;
-            eng_memory(ui.memory);
-            app_say("MEMORY", ui.memory ? "FROZEN" : "OFF");
+            fx_toggle(FX_TAPESTOP);      /* a tap: TAPE STOP (again: it spins back up) */
         } else if (now - ui.rec_t >= 1000u) {
             ui.rec_t = 0;
             all_off();
@@ -1403,7 +1532,7 @@ static void lights(void)
         btn |= LED_PLAY_GREEN;
     if (ui.lowhold)
         btn |= 1u << B_SEQ;
-    if (set.epic)
+    if (set.arp || set.epic)
         btn |= 1u << B_ARP;
     if (ui.page == PG_SPLIT)
         btn |= 1u << B_SEL;
@@ -1411,11 +1540,13 @@ static void lights(void)
         btn |= 1u << B_GLO;
     if (ui.page == PG_GLIDE)
         btn |= 1u << B_EDIT;
-    if (ui.page == PG_WORLD)
+    if (ui.page == PG_PERF || ui.fx)
         btn |= 1u << B_FX;
-    if (ui.page == PG_CUES)
+    if (ui.page == PG_CHORD || set.chord)
         btn |= 1u << B_ENV;
-    if (ui.memory)
+    if (ui.page == PG_ARP)
+        btn |= 1u << B_LFO;
+    if (ui.fx >> FX_TAPESTOP & 1u)
         btn |= 1u << B_REC;
     if (set.octave < 0)
         btn |= 1u << B_OCTDN;
@@ -1617,20 +1748,16 @@ static void draw_panel(void)
     text_cat(t, "% XR ");                /* xruns: blocks the sound came late (a click each) */
     int_text((int32_t)plat_xruns(), n);
     text_cat(t, n);
-    if (ui.page == PG_CUES) {            /* the eight cues: kept (amber), picked (frame), sounding (cyan) */
-        uint32_t c;
-        for (c = 0; c < NCUE; c++) {
-            int32_t x = 6 + (int32_t)c * 29;
-            uint16_t col = ui.cue_cur == c + 1u ? C_CYAN : set.cue_n[c] ? C_AMBER : RGB(40, 30, 50);
-            if (ui.cue_sel == c + 1u)
-                cv_rect(x - 1, 77, 26, 16, C_WHITE);
-            cv_rect(x, 78, 24, 14, col);
-            cv_rect(x + 1, 79, 22, 12, C_BLACK);
-            n[0] = (char)('1' + c);
-            n[1] = 0;
-            cv_text(x + 3, 80, &FONT_XS, n, col);
-            if (set.cue_n[c])
-                cv_rect(x + 12, 84, (int32_t)set.cue_n[c] * 2, 3, col);
+    if (ui.page == PG_PERF) {            /* the eight pads (the lowest white keys): on (red), sounding */
+        uint32_t f;
+        for (f = 0; f < NFX; f++) {
+            int32_t x = 3 + (int32_t)f * 29;
+            float a = eng_fx_amt((int)f);
+            int on = (ui.fx >> f & 1u) || (f == FX_REWIND && eng_fx_busy() && a > 0.1f);
+            uint16_t col = on ? C_RED : RGB(70, 40, 50);
+            cv_rect(x, 77, 27, 16, col);
+            cv_rect(x + 1, 78, 25, 14, on ? mix565(C_BLACK, C_RED, 70u) : C_BLACK);
+            ctext(x + 14, 79, &FONT_XS, FX_SHORT[f], on ? C_WHITE : RGB(150, 110, 120));
         }
         cv_blit(0, 144);
         return;
@@ -1660,8 +1787,8 @@ static void sheet_btn(int32_t x, int32_t y, const char *name, const char *does, 
 static void draw_sheet(void)
 {
     static const char *const KN[NPAGE][4] = {
-        {"SWELL", "DRIFT", "SPACE", "RAIN"},  {"SPLIT", "POINT", "SCALE", "FOLLOW"}, {"PRESS", "AMOUNT", "TONE", "VIB"},
-        {"LO GLIDE", "LO MODE", "GLIDE", "MODE"}, {"CITY", "STORY", "LOGS", "TIME"},   {"CUE", "FADE", "HOLD", "AUTO"},
+        {"SHAPE", "DRIFT", "SPACE", "FILTER"},  {"SPLIT", "POINT", "SCALE", "FOLLOW"}, {"PRESS", "AMOUNT", "TONE", "VIB"},
+        {"LO GLIDE", "LO MODE", "GLIDE", "MODE"}, {"SHAPE", "DRIFT", "SPACE", "FILTER"}, {"CHORD", "SPREAD", "SC", "SC RATE"},
         {"RATE", "PATTERN", "OCTAVES", "GATE"},
     };
     uint32_t i;
@@ -1683,20 +1810,20 @@ static void draw_sheet(void)
         cv_text(x + 11, 54, &FONT_XS, KN[ui.page][i], C_CYAN);
     }
     cv_rect(0, 66, 240, 1, RGB(60, 20, 60));
-    sheet_btn(4, 68, "FX", "WORLD", ui.page == PG_WORLD);
+    sheet_btn(4, 68, "FX", "PERFORM", ui.page == PG_PERF);
     sheet_btn(62, 68, "SEL", "SPLIT", ui.page == PG_SPLIT);
-    sheet_btn(120, 68, "ENV", "CUES", ui.page == PG_CUES);
+    sheet_btn(120, 68, "ENV", "CHORD", ui.page == PG_CHORD);
     sheet_btn(178, 68, "EDIT", "GLIDE", ui.page == PG_GLIDE);
     sheet_btn(4, 94, "GLO", "PRESSURE", ui.page == PG_PRESS);
     sheet_btn(62, 94, "HOME", "MAIN", ui.page == PG_MAIN);
-    sheet_btn(120, 94, "SAVE", "KEEP CUE", 0);
+    sheet_btn(120, 94, "FX+KEY", "EFFECT", ui.fx != 0);
     sheet_btn(178, 94, "LFO", "ARP PAGE", ui.page == PG_ARP);
     cv_blit(0, 24);
     cv_begin(240, 96, C_BLACK);
     sheet_btn(4, 2, "PLAY", "DRONE", ui.drone);
     sheet_btn(62, 2, "SEQ", "LOW HOLD", ui.lowhold);
     sheet_btn(120, 2, "ARP", "ARP/EPIC", set.arp);
-    sheet_btn(178, 2, "REC", "MEMORY", ui.memory);
+    sheet_btn(178, 2, "REC", "TAPE STOP", ui.fx >> FX_TAPESTOP & 1u);
     sheet_btn(4, 30, "OCT-/+", "OCTAVE", set.octave != 0);
     sheet_btn(62, 30, "REC 1s", "ALL OFF", 0);
     sheet_btn(120, 30, "HOME 1s", "RESET", 0);
@@ -1855,6 +1982,7 @@ void app_init(void)
     knobs_from_settings();
     sound();
     arp_cfg();
+    eng_sidechain((float)set.sc_depth / 100.0f, set.sc_rate);
 }
 
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
@@ -1903,6 +2031,11 @@ void app_frame(void)
             eng_clock(st == 0xF8u ? CLK_TICK : st == 0xFAu ? CLK_START : st == 0xFBu ? CLK_CONT : CLK_STOP);
             continue;
         }
+        if ((st & 0x0Fu) == 9u && (st & 0xF0u) >= 0x80u && (st & 0xF0u) <= 0xA0u) {   /* channel 10: drums */
+            if ((st & 0xF0u) == 0x90u && d2 && (d1 == 35u || d1 == 36u) && set.sc_rate == SC_KICK)
+                eng_sc_hit();            /* a kick (SIX MACHINES'): the SIDECHAIN ducks */
+            continue;
+        }
         if ((st & 0xF0u) == 0x90u && d2) {
             eng_note_on(id, (float)d1, (float)d2 / 127.0f);
             if (set.epic) {
@@ -1928,7 +2061,7 @@ void app_frame(void)
     ann_tick(now);
     /* the settings to the flash: a write stops the sound for a moment (a click while it plays), so only in a quiet
      * moment (no note, no cue, no MEMORY), faded out first; the room and the rain come back a moment later */
-    if (set_dirty && now - dirty_at > 3000u && eng_voices() == 0 && !ui.memory && !ui.cue_cur) {
+    if (set_dirty && now - dirty_at > 3000u && eng_voices() == 0 && !ui.fx && !eng_fx_busy() && !ui.cue_cur) {
         if (!ui.ducking) {
             eng_duck(1);
             ui.ducking = 1;
@@ -2038,6 +2171,16 @@ int app_expect(const char *what, int *got)
         *got = set.arp_pat;
     else if (!strcmp(what, "bpm"))
         *got = set.bpm;
+    else if (!strcmp(what, "chord"))
+        *got = set.chord;
+    else if (!strcmp(what, "fx"))
+        *got = (int)ui.fx;
+    else if (!strcmp(what, "fx_busy"))
+        *got = (int)eng_fx_busy();
+    else if (!strcmp(what, "sc_rate"))
+        *got = set.sc_rate;
+    else if (!strcmp(what, "sc_duck"))   /* the sidechain ducking now (gain under 0.9) */
+        *got = eng_sc_gain() < 0.9f;
     else if (!strcmp(what, "arp_oct"))
         *got = set.arp_oct;
     else if (!strcmp(what, "arp_ext"))
