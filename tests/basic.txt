@@ -1,0 +1,95 @@
+# OFFWORLD in the host simulator:
+#   X0X_FONTSET=terminus python3 fm1-base/tools/build.py . --host, then build/host/stranger_synth_host tests/basic.txt build/host
+splashshot splash.png
+wait 900
+shot intro.png
+expect intro 1
+expect preset 0
+expect m1 45
+expect zone3 2
+# a key ends the intro and plays: the brass swells
+wav brass.wav
+key w4 down 110
+wait 200
+expect intro 0
+expect voices 1
+key w6 down 100
+key w8 down 90
+wait 2500
+shot playing.png
+key w4 up
+key w6 up
+key w8 up
+wait 5000
+wavstop
+expect peak_db_min -24
+# DRONE: the chord stays, a deep root under it
+tap PLAY
+expect drone 1
+key w0 down 100
+key w4 down 100
+wait 300
+key w0 up
+key w4 up
+wait 1500
+expect latched 129
+expect deep 41
+expect voices 3
+shot drone.png
+# a new chord replaces it
+tapkey w2 100
+wait 200
+expect latched 16
+expect deep 45
+# EPIC: root, fifth and octave
+tap ARP
+expect epic 1
+tapkey w9 100
+wait 200
+expect latched 65536
+# K4 slowly to STORM: rain on the screen
+turn K4 120 90
+wait 300
+expect zone4 3
+wav storm.wav
+wait 4000
+wavstop
+shot storm.png
+# SPACE to FREEZE
+turn K3 60 20
+wait 300
+expect m3 127
+expect zone3 4
+shot freeze.png
+# presets
+turn PRESET 1
+wait 100
+expect preset 1
+expect m1 45
+shot preset.png
+turn PRESET -1
+wait 100
+expect preset 0
+expect m4 105
+# REC held: every note off; DRONE off
+press REC
+wait 1100
+release REC
+expect latched 0
+tap PLAY
+expect drone 0
+wait 9000
+expect voices 0
+# tone, vibrato, octave
+turn SELECT 5
+turn ALGO 4
+tap OCT+
+expect octave 1
+wait 4500
+expect dirty 0
+reboot
+wait 3200
+expect octave 1
+expect epic 1
+expect m4 105
+expect drone 0

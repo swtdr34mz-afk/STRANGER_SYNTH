@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "id": "stranger_synth",
+  "name": "STRANGER SYNTH",
+  "author": "swtdr34mz",
+  "license": "MPL-2.0",
+  "tagline": "A performance synth: 80s analogue poly sounds, arps, a low split, tape and VHS effects",
+  "description": "A performance synth in the spirit of 80s analogue film scores: classic poly and mono sounds, an arpeggiator, a low split the melody follows, chords with sidechain, tape and VHS performance effects. Work in progress, based on OFFWORLD.",
+  "tags": [
+    "synth",
+    "chords"
+  ],
+  "install": "https://github.com/swtdr34mz-afk/STRANGER_SYNTH/releases",
+  "source": "https://github.com/swtdr34mz-afk/STRANGER_SYNTH",
+  "screenshot": "site/img/screen-main.png",
+  "hardware": {
+    "models": [
+      "FM-1"
+    ],
+    "flash": [
+      "856014",
+      "B36014"
+    ],
+    "features": [
+      "usb-audio-in",
+      "usb-audio-out",
+      "second-core",
+      "velocity",
+      "pressure",
+      "screen-reader",
+      "backup"
+    ]
+  },
+  "credits": "Based on OFFWORLD (swtdr34mz). Built on fm1-base (Charles Vestal) and felucca-bsp (Leo Kuroshita, Hügelton Instruments)."
+}

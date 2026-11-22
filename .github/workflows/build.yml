@@ -1,0 +1,152 @@
+# Builds the firmware (.fwsc, installable on an FM-1) on GitHub's machines, which can reach JieLi's toolchain server.
+# Also runs the host simulator's tests (a failing test does not stop the build).
+# Result: Actions tab > the run > "Artifacts" > stranger_synth-firmware.
+# On a tag (v0.1, v1.0 ...) the release gets the .fwsc. Every push to main also puts STRANGER SYNTH in the browser
+# (fm1-base's emulator: the same app compiled to WebAssembly) on GitHub Pages: https://swtdr34mz-afk.github.io/STRANGER_SYNTH/emu/
+# (the Firmware Hub card's play key, fmhub.json "play"; Settings > Pages > Source: GitHub Actions).
+name: Build firmware
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+env:
+  X0X_FONTSET: terminus          # the screens' pixel type (fm1-base's Terminus set)
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q libtinfo5 libncurses5 xz-utils
+          pip install -q Pillow fonttools
+
+      - name: Host simulator tests
+        continue-on-error: true      # a failing test is shown in the log but does not stop the firmware build
+        run: |
+          python3 fm1-base/tools/build.py . --host
+          build/host/stranger_synth_host tests/basic.txt build/host
+          build/host/stranger_synth_host tests/split.txt build/host
+          build/host/stranger_synth_host tests/glide.txt build/host
+          build/host/stranger_synth_host tests/world.txt build/host
+
+      - name: JieLi toolchain
+        run: fm1-base/tools/get_toolchain.sh "$HOME/.jieli"
+
+      - name: AC79 SDK (the three files the package needs)
+        run: |
+          set -x
+          SDK="$HOME/.jieli/ac79-sdk"
+          TAG=AC79NN_SDK_V1.2.1_2023-12-13
+          # 1. felucca-bsp's script (GitHub mirror, pinned revision)
+          if fm1-base/bsp/tools/get_sdk.sh "$SDK"; then exit 0; fi
+          rm -rf "$SDK"
+          # 2. JieLi's own repository on Gitee, the tag, only the tools folder
+          if git clone --depth 1 --branch "$TAG" --filter=blob:none --sparse https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$SDK" \
+             && git -C "$SDK" sparse-checkout set cpu/wl82/tools; then :; else
+            rm -rf "$SDK"
+            # 3. the whole tag, shallow
+            git clone --depth 1 --branch "$TAG" https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$SDK"
+          fi
+          cd "$SDK"
+          echo "4e3b4c220dc96641cb5a723f41e68ce41d5261ae9434bb33fbd7f2c59976ded4  cpu/wl82/tools/uboot.boot" | sha256sum -c -
+          echo "276579954f076886a6a7694f65dc71c034a63a2c204b76749065c0ac7b010d1b  cpu/wl82/tools/cfg_tool.bin" | sha256sum -c -
+          echo "41167491bffed4651750719c973d2758adeb9021a5670d02d6a53c85ed80ea7d  cpu/wl82/tools/cfg/eq_cfg_hw.bin" | sha256sum -c -
+
+      - name: Firmware
+        run: |
+          export JIELI_TOOLCHAIN="$HOME/.jieli/toolchain" AC79_SDK="$HOME/.jieli/ac79-sdk"
+          set -o pipefail
+          REL=""; if [ "${GITHUB_REF_TYPE}" = "tag" ]; then REL="--release ${GITHUB_REF_NAME#v}"; fi
+          if ! python3 fm1-base/tools/build.py . $REL 2>&1 | tee build.log; then
+            # the log's errors as annotations (readable from the API without signing in)
+            grep -nE "error|Error|ERROR|undefined|overflow|exceed|check|fail" build.log | head -60 > errs.txt || true
+            echo "::error title=build (errors)::$(sed 's/%/%25/g' errs.txt | awk '{printf "%s%%0A", $0}')"
+            echo "::error title=build (tail)::$(tail -40 build.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+            exit 1
+          fi
+          echo "::notice title=build (summary)::$(tail -30 build.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stranger_synth-firmware
+          path: |
+            build/*.fwsc
+            build/*.bin
+            build/host/*.png
+            build/host/*.wav
+          if-no-files-found: warn
+
+      - name: Release with the .fwsc attached (on a tag v1.0, v1.1 ...)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/*.fwsc
+            build/firmware.json
+
+  emulator:
+    # STRANGER SYNTH in the browser: tools/build.py --web (Emscripten), the page and app.wasm in build/emu
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Tools
+        run: pip install -q Pillow fonttools
+
+      - name: Emscripten (emsdk 6.0.10 at a fixed commit, as fm1-base's template)
+        run: |
+          git clone -q https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          git -C "$RUNNER_TEMP/emsdk" checkout -q a2b92777574c2feda07994cd4f1079a3dfc151f8
+          "$RUNNER_TEMP/emsdk/emsdk" install 6.0.10
+          "$RUNNER_TEMP/emsdk/emsdk" activate 6.0.10
+
+      - name: The emulator
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          emcc --version | head -1
+          REL=""; if [ "${GITHUB_REF_TYPE}" = "tag" ]; then REL="--release ${GITHUB_REF_NAME#v}"; fi
+          python3 fm1-base/tools/build.py . --web $REL
+          mkdir -p _site
+          cp -r build/emu _site/emu
+          cp -r web/words _site/words          # the screen reader's words (the page reads ../words/)
+          printf '%s\n' '<!doctype html><meta charset="utf-8"><title>STRANGER SYNTH</title>' \
+            '<meta http-equiv="refresh" content="0; url=emu/"><a href="emu/">STRANGER SYNTH in the browser</a>' > _site/index.html
+          ls -la _site _site/emu
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  pages:
+    # the emulator on GitHub Pages (from main only: the Pages environment takes the default branch)
+    needs: emulator
+    if: github.ref == 'refs/heads/main'
+    continue-on-error: true      # until Pages is switched on (Settings > Pages > Source: GitHub Actions) it cannot deploy
+    runs-on: ubuntu-22.04
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}emu/
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

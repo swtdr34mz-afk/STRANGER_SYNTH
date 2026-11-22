@@ -1,0 +1,44 @@
+# OFFWORLD: GLIDE (EDIT): MONO slides one voice; POLY glides from the last note
+wait 3200
+tap EDIT
+expect page 3
+turn K3 50
+turn K4 2
+expect mode_h 1
+# MONO: a second key while the first is held: one voice, it slides
+key 7 down 100
+wait 300
+key 12 down 100
+wait 50
+expect voices 1
+expect mono 13
+expect kp12 65
+wait 600
+# the second let go: back to the first, still one voice
+key 12 up
+wait 50
+expect mono 8
+expect voices 1
+key 7 up
+wait 50
+expect mono 0
+wav glide.wav
+key 2 down 100
+wait 400
+key 14 down 100
+wait 1200
+key 2 up
+key 14 up
+wait 1500
+wavstop
+# POLY with glide: a new voice each note
+turn K4 -2
+expect mode_h 0
+key 7 down 100
+key 11 down 100
+wait 100
+expect voices >1
+key 7 up
+key 11 up
+tap HOME
+expect page 0
