@@ -1,103 +1,76 @@
 # STRANGER SYNTH
 
-A performance synth for the M-VAVE FM-1 by **swtdr34mz**, in the spirit of 80s analogue film scores. Based on
-[OFFWORLD](https://github.com/swtdr34mz-afk/OFFWORLD), built on [fm1-base](https://github.com/charlesvestal/fm1-base)
+A performance synth for the M-VAVE FM-1 by **swtdr34mz**, in the spirit of the 80s analogue film scores: walls of
+detuned saws, resonant filters opening slowly, arps that pulse under everything, tape that stops and warps. Built for
+playing live: a low split two octaves down, an arpeggiator that follows the clock, chords from one finger, a sidechain,
+a heartbeat as the groove, eight performance effects, and a second FM-1 running SIX MACHINES as its drummer.
+Based on [OFFWORLD](https://github.com/swtdr34mz-afk/OFFWORLD), built on [fm1-base](https://github.com/charlesvestal/fm1-base)
 and [felucca-bsp](https://github.com/hugelton/felucca-bsp).
 
-![STRANGER SYNTH](site/img/screen-main.png) ![The title](site/img/screen-splash.png) ![The mirror](site/img/screen-mirror.png)
+![The title](site/img/screen-splash.png) ![Playing](site/img/screen-main.png) ![The HEART](site/img/screen-heartpage.png) ![The MIRROR](site/img/screen-mirror.png)
 
-**Work in progress.** Unofficial: not made or supported by M-VAVE; at your own risk.
+**Manual:** [English](docs/MANUAL.md) · [Deutsch](docs/HANDBUCH.md) · **Try it in the browser:** [emulator](https://swtdr34mz-afk.github.io/STRANGER_SYNTH/emu/)
 
-## Plan
+**Install:** download the `.fwsc` from [Releases](https://github.com/swtdr34mz-afk/STRANGER_SYNTH/releases) and install it
+as any FM-1 firmware. Unofficial: not made or supported by M-VAVE; at your own risk.
 
-1. Scaffold: name, splash, IDs, hub files (done: v0.0.1, still sounds like OFFWORLD)
-2. LOW SPLIT + arpeggiator (synced to MIDI clock) (done: v0.0.2)
-3. Presets in the style of classic 80s poly and mono synths (done: v0.0.3)
-4. CHORD mode with sidechain, TONE FOLLOW (to the low split or the chords) (done: v0.0.3)
-5. Performance FX: tape stop, VHS wobble, tape rewind, gated reverb, tape echo throw, lights out, walkie, riser (done: v0.0.3)
-6. The screen: a small town at night, the mirror world (done: v0.1.0)
-7. SIX MACHINES sends MIDI clock and its kick as the sidechain trigger (done: v0.2.0, and SIX MACHINES' MIDI out)
+## What it does
+
+- **13 presets** in the manner of classic 80s analogues and the film scores of the time (the names are our own):
+  THEME SEQUENCE, KIDS ON BIKES, LAZY NIGHT, NOIR TAPE, CHAOS, FIVE BRASS, CHORUS STRINGS, MODEL BASS, OB BRASS,
+  SIX PAD, MONO ARP BASS, SYNC LEAD, MIRROR CHOIR. Some start set up to play: THEME SEQUENCE in the low split with the
+  right hand on the arp, MODEL BASS and MONO ARP BASS on the arp (UP-DOWN).
+- **Four macro knobs on sweetspots**: SHAPE (PLUCK .. PAD), DRIFT (CLEAN .. TAPE), SPACE (ROOM .. FREEZE),
+  FILTER (DARK .. SCREAM, where it also drives). **SIZE** on ALGORITHM makes everything bigger at once (chorus, width,
+  room), **TONE** on SELECT darker or brighter.
+- **LOW SPLIT** (1 to 3 octaves down) with **LOW HOLD**, and **FOLLOW**: the right hand in the scale or on the chord of
+  the left (SNAP, WHITE, CHORD).
+- **ARPEGGIATOR**: 1/4 to 1/32 with triplets, UP, DOWN, UP-DOWN, PLAYED, RANDOM, 1 to 4 octaves, gate; on either hand;
+  its own tempo or MIDI clock.
+- **CHORD**: ten chords from one finger with three voicings; with the arp, the arp plays the chord.
+- **SIDECHAIN**: at 1/4, 1/8, 1/2, on a kick from outside (MIDI channel 10, note 36) or on the HEART.
+- **HEART**: a heartbeat as the groove, SINGLE, DOUBLE (lub-dub), SLOW, RACING, from an analogue kick to a real
+  heart's muffled thump.
+- **PERFORM**: TAPE STOP, VHS, REWIND, GATED reverb, ECHO throw, LIGHTS OUT, WALKIE, RISER, from the keys while FX is
+  held; TAPE STOP on PLAY.
+- **LINK**: the USB port plays host to a second FM-1 with SIX MACHINES (its clock and kick drive the arp, the heart
+  and the sidechain), or to a USB-MIDI controller.
+- **The screen**: a small town at night, eight places cut like a worn video tape (a street, the woods, the lab, a
+  road with bikes, a basement door, a red storm, a radio tower, the arcade); lights, headlights and fireflies follow the
+  notes, the picture pulses with the heart, and while the effects play it turns over into a cold, dark mirror of itself.
+  All drawn in the firmware.
+
+## The controls
+
+| Control | Does |
+| --- | --- |
+| K1..K4 | SHAPE, DRIFT, SPACE, FILTER (on a page: the page's four) |
+| SELECT / ALGORITHM / PRESET | TONE / SIZE / the preset (SELECT on the ARP page: the tempo) |
+| PLAY | TAPE STOP (again: it spins back up) |
+| REC | HOLD (every note stays); held 1 s: all notes off |
+| SEQ | LOW HOLD |
+| ARP | the arpeggiator; held 1 s: EPIC (fifth and octave); on the ARP page: which hand |
+| SEL | SPLIT page (SPLIT, POINT, SCALE, FOLLOW); held + a key: the split there |
+| GLO | PRESSURE page (PRESSURE, AMOUNT, TONE, VIBRATO) |
+| EDIT | HEART page (HEART, PATTERN, REAL, DECAY); again: GLIDE; again: MAIN |
+| ENV | CHORD page (CHORD, SPREAD, SIDECHAIN, SC RATE) |
+| LFO | ARP page (RATE, PATTERN, OCTAVES, GATE) |
+| FX | PERFORM page; FX held + one of the lowest eight white keys: an effect on / off (lit while held) |
+| SAVE | LINK: the USB port as host (again: back to the computer) |
+| HOME | MAIN; held 1 s: the preset's knobs as they came; twice: the controls drawn on the screen |
+| OCT- / OCT+ | the octave |
+
+## Two FM-1s
+
+Switch LINK on (SAVE) on STRANGER SYNTH and connect the FM-1 running [SIX MACHINES](https://github.com/swtdr34mz-afk/SIX_MACHINES)
+(its current version, with MIDI out: clock, START / STOP and its kick) to its USB port with an OTG cable or adapter. The port
+gives no power: the other FM-1 runs on its battery or through a powered hub. The header shows LNK, green when connected.
 
 ## Build
 
-`X0X_FONTSET=terminus python3 fm1-base/tools/build.py . --host`, then `build/host/stranger_synth_host tests/basic.txt build/host`.
-GitHub Actions builds the `.fwsc` on every push (Actions > the run > Artifacts) and attaches it to a release on a tag `v*`.
+`X0X_FONTSET=terminus python3 fm1-base/tools/build.py . --host`, then `build/host/stranger_synth_host tests/basic.txt build/host`
+(and arp, split, glide, perform, link, heart). GitHub Actions builds the `.fwsc` on every push and attaches it to a
+release on a tag `v*`; the browser emulator goes to GitHub Pages.
 
-## The arpeggiator (v0.0.2)
-
-- **ARP** (tap): the arpeggiator on / off. With the low split on it plays the left hand (the right hand plays free and
-  follows it); with the split off, every key. LOW HOLD keeps its notes running. **ARP held 1 s**: EPIC.
-- **LFO**: the ARP page. K1 RATE (1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32), K2 PATTERN (UP, DOWN, UP-DOWN, PLAYED, RANDOM),
-  K3 OCTAVES (1..4), K4 GATE (5..100 %). SELECT on this page: the tempo (40..240 BPM).
-- **MIDI clock** in (USB or the TRS jack): the arp follows it (START from the first step, STOP silent); the page shows EXT CLOCK.
-
-## Sounds, chords, performance (v0.0.3)
-
-- **Ten presets** in the manner of classic 80s analogues (our own names): NIGHT SEQUENCE, FIVE BRASS, CHORUS STRINGS,
-  MODEL BASS, OB BRASS, SIX PAD, MONO ARP BASS, SYNC LEAD, MIRROR CHOIR, THE DARK BELOW.
-- **The knobs (MAIN)**: K1 SHAPE (PLUCK, STAB, BRASS, SWELL, PAD), K2 DRIFT (CLEAN, ANALOG, ENSEMBLE, WIDE, TAPE),
-  K3 SPACE (ROOM .. FREEZE), K4 FILTER (DARK, WARM, OPEN, BRIGHT, SCREAM). OFFWORLD's rain is gone.
-- **CHORD** (ENV): K1 CHORD (OFF, MINOR, MAJOR, MIN7, MAJ7, SUS2, SUS4, POWER, MIN9, ADD9) from one finger (the low split,
-  or every key with the split off; with ARP the arp plays the chord), K2 SPREAD (CLOSE, OPEN, WIDE), K3 SIDECHAIN depth,
-  K4 SC RATE (1/4, 1/8, 1/2, KICK: a kick on MIDI channel 10, note 36).
-- **FOLLOW CHORD** (SEL page, FOLLOW): the right hand's white keys play the chord's notes.
-- **PERFORM**: FX held + one of the lowest eight white keys switches an effect (while FX is held, the keys of the
-  effects that are on light up); FX tapped shows the PERFORM page (the keys play as always there). The effects:
-  TAPE STOP, VHS, REWIND (once), GATED reverb, ECHO throw, LIGHTS OUT, WALKIE, RISER. The knobs stay the macros.
-- **PLAY**: TAPE STOP (again: it spins back up). **REC**: HOLD (every note stays); REC held 1 s: every note off.
-
-## The screen (v0.1.0)
-
-- **The intro**: a VCR wakes up, a red storm rises over the trees and houses, a bike crosses, the title buzzes on in red neon.
-- **Eight places**, one night (a VCR clock in the corner), cut with a tape tear and colour bars every 18 to 35 s:
-  MAPLE LANE, THE WOODS, THE LAB, ROUTE 9, THE BASEMENT, THE SKY, RADIO TOWER, THE ARCADE. Windows, lamps, headlights,
-  fireflies, arcade screens and sparks follow the notes; in the red storm the notes bring lightning.
-- **The MIRROR**: while PERFORM effects play, the picture turns over into a cold, dark copy of itself, red at the
-  brightest, ash floating up, the tracking line rolling. All drawn here; no figures, logos or images from any film or show.
-
-## LINK: two FM-1s (v0.2.0)
-
-**SAVE** switches LINK on: STRANGER SYNTH's USB port plays host. Connect the FM-1 running SIX MACHINES to it (an OTG
-cable or adapter; the port gives no power, so the other FM-1 runs on its battery or through a powered hub). The header
-shows LNK (green: connected). SIX MACHINES' clock then drives the arp and the sidechain (START, STOP), and with
-SC RATE at KICK its kick ducks the sound. SAVE again: back to the computer (no computer while LINK is on).
-
-## v0.2.1
-
-- PLAY: TAPE STOP; REC: HOLD (no deep root under it); FX + key for the effects, their keys lit while FX is held.
-- No sounds from the screen any more (the crackle of the flickering lights); drier presets; STRANGER's own colours.
-
-## v0.3.0: the sounds of the scores
-
-Seven new presets, tuned against reference recordings (their brightness, noise, decay, partials, stereo width):
-**THEME SEQUENCE** (two saws and the sub under a resonant filter nearly shut: FILTER opens it), **KIDS ON BIKES**
-(bright pulse, wide chorus, air), **LAZY NIGHT** (dark detuned plucks), **DIRTY BELLS** (a ringing sine against a saw
-2.57 times up, hiss, tape grit), **CHAOS** (a grinding minor second, ring, warp), **END CREDITS** and **CREDITS RISE**
-(calm to drastic with FILTER: at SCREAM it drives). New in the engine: RING, NOISE and PLUCK per preset; FILTER at
-SCREAM drives. The arp's tempo starts at 84 BPM (1/16).
-
-## v0.4.0
-
-- **ALGORITHM: SIZE** (was VIBRATO): the sound bigger in one turn: the ensemble chorus, the stereo width, a little
-  detune, more and longer reverb, a touch of delay. (VIBRATO stays on the PRESSURE page, K4.)
-- **KIDS ON BIKES** the Juno-60 way (saw and pulse together, the square sub, chorus, long ring); **LAZY NIGHT** sour
-  (a tritone beside it, ring, wobble); **DARK BELLS** replace DIRTY BELLS (sines ringing out of tune, smooth, a canyon
-  of reverb); **FIVE BRASS** from below (an octave down, deeper, a cathedral); **MODEL BASS** starts on the arp
-  (UP-DOWN). END CREDITS and CREDITS RISE are gone: 13 presets.
-
-## v0.5.0: the HEART
-
-- **HEART** (EDIT; again: GLIDE): a heartbeat as the groove, at the tempo or SIX MACHINES' clock. K1 the level (0: off),
-  K2 SINGLE / DOUBLE (lub-dub) / SLOW / RACING, K3 REAL (an analogue kick toward a real heart's muffled thump),
-  K4 DECAY. SC RATE **HEART** (CHORD page): the sidechain ducks on every beat. The picture pulses red with it.
-- **THEME SEQUENCE** starts on the arp (UP-DOWN) and holds a deep root an octave under the arp's lowest note; a wall
-  of detuned saws. FILTER opens much further now (BRIGHT, SCREAM).
-- **NOIR TAPE** replaces DARK BELLS (a hollow square synth from a worn tape: wobble, hiss, the highs gone).
-- **MONO ARP BASS** starts on the arp (UP-DOWN); **SYNC LEAD** wider, with a long hall.
-
-## v0.6.0
-
-- **THEME SEQUENCE** starts in the LOW SPLIT two octaves down (the left hand the bass) with the right hand on the arp
-  (UP-DOWN), the filter open. On the ARP page, with the split on, ARP tapped switches the hand the arp plays.
-- **The intro** runs about 4 s after the boot: the lightning strikes and in its light a vast eye of cloud turns over the
-  whole sky (our own), a second flash, then the name. (v0.6.2: the eye became roots hanging from the clouds.)
+The sound engine is `dsp/engine.c` with `dsp/arp.c`, `dsp/perform.c` and `dsp/heart.c`; the screen is `film.c` with
+`scenes.c`; the controls and pages are `app.c`.

@@ -1922,30 +1922,10 @@ static void draw_sheet(void)
 }
 
 /* the intro, 4 s: a VCR wakes up; a red storm rises over the trees and the houses, a bike crosses, ash floats up;
- * the title buzzes on letter by letter like red neon tubes, SYNTH under it; lightning, and in its light roots without
- * end hanging from the clouds over the whole sky; the name. Drawn in two
+ * the title buzzes on letter by letter like red neon tubes, SYNTH under it; lightning, and in its light a vast eye
+ * of cloud over the sky; the name. Drawn in two
  * bands (the canvas holds 144 rows), each from the same picture in screen rows. */
 #define INTRO_MS 7000u
-
-/* a root hanging from the storm: from (x, y) at angle a (turns; 0.25 straight down), len pixels, thick at the top;
- * it bends a little as it goes and splits in two, depth times. Dark against the lit sky, its edge glowing red */
-static void sky_root(int32_t x, int32_t y, float a, float len, int depth, uint32_t seed, uint32_t lit)
-{
-    int32_t s, steps = (int32_t)(len / 3.0f), w = depth + 1;
-    float fx = (float)x, fy = (float)y;
-    uint16_t edge = mix565(C_BLACK, RGB(255, 70, 50), lit), core = mix565(C_BLACK, RGB(20, 0, 2), lit);
-    for (s = 0; s < steps; s++) {
-        a += ((float)(hsh(seed, (uint32_t)s) % 100u) - 50.0f) * 0.0009f;
-        fx += fm_sin_turns(a + 0.25f) * 3.0f;
-        fy += fm_sin_turns(a) * 3.0f;
-        cv_rect((int32_t)fx - w / 2 - 1, (int32_t)fy - 1, w + 2, 4, edge);
-        cv_rect((int32_t)fx - w / 2, (int32_t)fy - 1, w, 4, core);
-    }
-    if (depth > 0) {
-        sky_root((int32_t)fx, (int32_t)fy, a - 0.035f - (float)(seed % 7u) * 0.004f, len * 0.72f, depth - 1, seed * 31u + 1u, lit);
-        sky_root((int32_t)fx, (int32_t)fy, a + 0.035f + (float)(seed % 5u) * 0.004f, len * 0.66f, depth - 1, seed * 37u + 2u, lit);
-    }
-}
 
 static void intro_band(int32_t y0, int32_t h, uint32_t ms)
 {
@@ -1971,12 +1951,18 @@ static void intro_band(int32_t y0, int32_t h, uint32_t ms)
         cv_rect(cx, cy, w, 5, cc);
         cv_rect(cx + 5, cy + 5, w - 10, 2, mix565(cc, C_BLACK, 90));
     }
-    if (eye) {                           /* the lightning shows what grows in the storm: roots without end, hanging
-                                          * from the clouds over the whole sky, branching, reaching down (our own) */
-        uint32_t k;
-        for (k = 0; k < 9u; k++)
-            sky_root(8 + (int32_t)k * 28 + (int32_t)(hsh(k, 51u) % 14u), -4 - y0, 0.25f + ((float)(hsh(k, 52u) % 100u) - 50.0f) * 0.0012f,
-                     34.0f + (float)(hsh(k, 53u) % 22u), 4, k * 977u, eye);
+    if (eye) {                           /* the lightning shows what the storm hides: a vast eye of cloud turning over the
+                                          * whole sky, its arms spiralling in, its core burning (our own) */
+        uint32_t arm, st;
+        for (arm = 0; arm < 7u; arm++)
+            for (st = 0; st < 70u; st++) {
+                float r = 8.0f + (float)st * 2.2f, a = (float)arm / 7.0f + (float)st * 0.012f + (float)ms * 0.00002f;
+                int32_t px = 120 + (int32_t)(fm_sin_turns(a + 0.25f) * r * 1.25f), py = 96 + (int32_t)(fm_sin_turns(a) * r * 0.55f) - y0;
+                uint16_t c = mix565(RGB(40, 0, 4), RGB(255, 90, 60), (uint32_t)(70u - st) * 3u);
+                cv_rect(px - 2, py - 1, 5, 3, mix565(C_BLACK, c, eye));
+            }
+        for (st = 0; st < 10u; st++)     /* the core */
+            cv_rect(120 - 10 + (int32_t)st, 96 - 3 - y0 + (int32_t)(st & 1u), 20 - 2 * (int32_t)st, 6, mix565(C_BLACK, RGB(255, 220, 180), eye * (st + 6u) / 16u));
     }
     for (i = 0; i < 40u; i++) {          /* the tree line, rising */
         uint32_t q = hsh(i, 777u);
