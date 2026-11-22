@@ -24,7 +24,7 @@
  *                   the computer
  *   EDIT            the HEART page (a heartbeat as the groove: level, SINGLE / DOUBLE / SLOW / RACING, REAL, DECAY);
  *                   again: GLIDE; again: MAIN
- *   LFO             the ARP page: RATE, PATTERN, OCTAVES, GATE; SELECT there: the tempo (BPM; MIDI clock in wins)
+ *   LFO             the ARP page (there, with the split on, ARP tapped: which hand it plays, LEFT / RIGHT): RATE, PATTERN, OCTAVES, GATE; SELECT there: the tempo (BPM; MIDI clock in wins)
  *   REC held 1 s    every note let go
  * The melody: with the split on and FOLLOW on, the right hand plays in SCALE from the low split's note (the lowest
  * that sounds, or the last one): SNAP moves every key to the scale's note at or below it, WHITE puts the scale on the
@@ -32,7 +32,7 @@
 #include "fastmath.h"
 #include "engine.h"
 
-#define SET_MAGIC 0x36595353u            /* "SSY6": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
+#define SET_MAGIC 0x37595353u            /* "SSY7": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
 #define NCUE 8
 #define CUE_NOTES 6
 typedef struct {
@@ -67,7 +67,7 @@ typedef struct {
     uint8_t sc_depth, sc_rate;           /* the SIDECHAIN: 0..100 %, SC_* */
     uint8_t size;                        /* SIZE (ALGORITHM): 0..100 */
     uint8_t heart, heart_pat, heart_real, heart_dec;   /* the HEART: level 0..100 (0 off), HB_*, REAL, DECAY */
-    uint8_t rsv[1];
+    uint8_t arp_hi;                      /* 1: with the split on, the arp plays the right hand (else the left) */
 } settings_t;
 
 static settings_t set;
@@ -185,8 +185,10 @@ static void settings_defaults(void)
     set.heart_pat = HB_DOUBLE;
     set.heart_real = 60;
     set.heart_dec = 50;
-    set.arp = 1;                         /* THEME SEQUENCE starts on its arp, UP-DOWN */
+    set.arp = 1;                         /* THEME SEQUENCE: the split two octaves down, the right hand on the arp */
     set.arp_pat = ARP_UPDOWN;
+    set.arp_hi = 1;
+    set.split_oct = 2;
     set.city = 0;                        /* (OFFWORLD's city sounds: not here) */
 }
 
@@ -215,7 +217,7 @@ static int settings_ok(void)
            set.arp_pat < NARPPAT && set.arp_oct >= 1u && set.arp_oct <= 4u && set.arp_gate >= 5u && set.arp_gate <= 100u &&
            set.bpm >= 40u && set.bpm <= 240u && set.chord < NCHORD && set.spread < NSPREAD &&
            set.sc_depth <= 100u && set.sc_rate < NSC && set.size <= 100u &&
-           set.heart <= 100u && set.heart_pat < NHB && set.heart_real <= 100u && set.heart_dec <= 100u;
+           set.heart <= 100u && set.heart_pat < NHB && set.heart_real <= 100u && set.heart_dec <= 100u && set.arp_hi <= 1u;
 }
 
 static void settings_load(void)
@@ -332,6 +334,7 @@ static struct {
     uint32_t fx;                         /* PERFORM: the effects on (FX_*) */
     uint8_t link;                        /* LINK: the USB port plays host */
     uint8_t arp_auto;                    /* the arp was switched on by a preset */
+    uint8_t split_auto;                  /* the split too */
     uint8_t sel_used;
     uint32_t enc_at[NE];
     int32_t enc_acc[4];
@@ -554,7 +557,7 @@ static int key_pitch(uint32_t k, float *p)
 
 /* the ARPEGGIATOR: with the split on it takes the low split's notes, else every key's. Its keys start no voice of
  * their own; what they hold (pressed, or staying with LOW HOLD / DRONE) goes to the engine, which plays it */
-static int arp_side(int side) { return set.arp && (!split_on() || side == SIDE_L); }
+static int arp_side(int side) { return set.arp && (!split_on() || side == (set.arp_hi ? SIDE_R : SIDE_L)); }
 static int arp_key(uint32_t k) { return arp_side(side_of(k)); }
 static void heart_cfg(void)
 {
@@ -1333,10 +1336,26 @@ static void knob(int k, int32_t e)
 static void preset_load(int32_t d)
 {
     set.preset = (uint8_t)(((int32_t)set.preset + d % NPRESETS + NPRESETS) % NPRESETS);
-    if (PR.arp >= 0 && (!set.arp || set.arp_pat != (uint8_t)PR.arp)) {   /* a preset that starts on the arp */
+    if (PR.split && set.split_oct != PR.split) {   /* a preset that starts in the split */
+        set.split_oct = PR.split;
+        ui.split_auto = 1;
+        holds_changed();
+    } else if (!PR.split && ui.split_auto) {
+        set.split_oct = 0;
+        ui.split_auto = 0;
+        ui.lowhold = 0;
+        holds_changed();
+    }
+    if (PR.arp >= 0 && (!set.arp || set.arp_pat != (uint8_t)PR.arp || set.arp_hi != PR.arp_hi)) {   /* a preset that starts on the arp */
         set.arp_pat = (uint8_t)PR.arp;
-        if (!set.arp)
+        if (!set.arp) {
+            set.arp_hi = PR.arp_hi;
             arp_toggle();
+        } else {
+            uint32_t held = replay_begin();
+            set.arp_hi = PR.arp_hi;
+            replay_end(held);
+        }
         arp_cfg();
         ui.arp_auto = 1;
     } else if (PR.arp < 0 && ui.arp_auto && set.arp) {   /* (the arp it brought goes with it) */
@@ -1517,7 +1536,13 @@ static void input(void)
     if (ui.arp_t) {                      /* ARP: a tap the arpeggiator, held 1 s EPIC */
         if (!(btn >> B_ARP & 1u)) {
             ui.arp_t = 0;
-            arp_toggle();
+            if (ui.page == PG_ARP && set.arp && split_on()) {   /* on the ARP page: which hand it plays */
+                uint32_t held = replay_begin();
+                set.arp_hi = (uint8_t)!set.arp_hi;
+                replay_end(held);
+                app_say("ARP HAND", set.arp_hi ? "RIGHT" : "LEFT");
+            } else
+                arp_toggle();
         } else if (now - ui.arp_t >= 1000u) {
             ui.arp_t = 0;
             set.epic = (uint8_t)!set.epic;
@@ -1779,6 +1804,8 @@ static void draw_panel(void)
     }
     t[0] = 0;
     if (ui.page == PG_ARP) {             /* the tempo: its own, or EXT (MIDI clock in) */
+        if (split_on())
+            text_cat(t, set.arp_hi ? "R HAND  " : "L HAND  ");
         if (eng_clock_ext())
             text_cat(t, "EXT CLOCK  ");
         else {
@@ -1895,16 +1922,18 @@ static void draw_sheet(void)
 }
 
 /* the intro, 4 s: a VCR wakes up; a red storm rises over the trees and the houses, a bike crosses, ash floats up;
- * the title buzzes on letter by letter like red neon tubes, SYNTH under it; lightning; the name. Drawn in two
+ * the title buzzes on letter by letter like red neon tubes, SYNTH under it; lightning, and in its light a vast eye
+ * of cloud over the sky; the name. Drawn in two
  * bands (the canvas holds 144 rows), each from the same picture in screen rows. */
-#define INTRO_MS 4200u
+#define INTRO_MS 7000u
 
 static void intro_band(int32_t y0, int32_t h, uint32_t ms)
 {
     uint32_t i, glow = ms < 600u ? 0u : ms > 1800u ? 256u : (ms - 600u) * 256u / 1200u;
     int32_t y, rise = ms < 500u ? 0 : ms > 1700u ? 100 : (int32_t)((ms - 500u) / 12u);
     uint16_t sky0 = mix565(C_BLACK, RGB(10, 2, 12), glow), sky1 = mix565(C_BLACK, RGB(170, 34, 24), glow);
-    int flash = ms >= 3000u && ms < 3120u;
+    int flash = (ms >= 3600u && ms < 3760u) || (ms >= 5200u && ms < 5280u);
+    uint32_t eye = ms >= 3600u && ms < 4300u ? (ms < 3760u ? 256u : (4300u - ms) * 256u / 540u) : (ms >= 5200u && ms < 5500u ? (5500u - ms) * 160u / 300u : 0u);
     cv_begin(240, (uint32_t)h, C_BLACK);
     for (y = 0; y < h; y++) {            /* the sky: the storm, red from below */
         int32_t sy = y0 + y;
@@ -1921,6 +1950,19 @@ static void intro_band(int32_t y0, int32_t h, uint32_t ms)
         cv_rect(cx + 8, cy - 3, w - 16, 3, cc);
         cv_rect(cx, cy, w, 5, cc);
         cv_rect(cx + 5, cy + 5, w - 10, 2, mix565(cc, C_BLACK, 90));
+    }
+    if (eye) {                           /* the lightning shows what the storm hides: a vast eye of cloud turning over the
+                                          * whole sky, its arms spiralling in, its core burning (our own) */
+        uint32_t arm, st;
+        for (arm = 0; arm < 7u; arm++)
+            for (st = 0; st < 70u; st++) {
+                float r = 8.0f + (float)st * 2.2f, a = (float)arm / 7.0f + (float)st * 0.012f + (float)ms * 0.00002f;
+                int32_t px = 120 + (int32_t)(fm_sin_turns(a + 0.25f) * r * 1.25f), py = 96 + (int32_t)(fm_sin_turns(a) * r * 0.55f) - y0;
+                uint16_t c = mix565(RGB(40, 0, 4), RGB(255, 90, 60), (uint32_t)(70u - st) * 3u);
+                cv_rect(px - 2, py - 1, 5, 3, mix565(C_BLACK, c, eye));
+            }
+        for (st = 0; st < 10u; st++)     /* the core */
+            cv_rect(120 - 10 + (int32_t)st, 96 - 3 - y0 + (int32_t)(st & 1u), 20 - 2 * (int32_t)st, 6, mix565(C_BLACK, RGB(255, 220, 180), eye * (st + 6u) / 16u));
     }
     for (i = 0; i < 40u; i++) {          /* the tree line, rising */
         uint32_t q = hsh(i, 777u);
@@ -1944,7 +1986,7 @@ static void intro_band(int32_t y0, int32_t h, uint32_t ms)
         }
     }
     cv_rect(0, 214 - y0, 240, 26, RGB(8, 2, 6));    /* the road */
-    if (ms > 1300u && ms < 3800u) {      /* a bike crossing, its headlight ahead */
+    if (ms > 1300u && ms < 6000u) {      /* a bike crossing, its headlight ahead */
         int32_t bx = (int32_t)((ms - 1300u) / 9u) - 20, by = 222 - y0;
         for (i = 0; i < 9u; i++)
             cv_line(bx + 6, by - 6, bx + 50, by - 12 + (int32_t)i * 2, RGB(120, 110, 70));
@@ -1980,7 +2022,7 @@ static void intro_band(int32_t y0, int32_t h, uint32_t ms)
                 char c[2] = {T[i], 0};
                 uint32_t on = 1700u + i * 110u, lit;
                 lit = ms > on + 260u || (ms > on && ((ms / 40u + i * 7u) * 2654435761u >> 30) > 0u);
-                if (ms > 3000u && ms < 3080u && i == 4u)
+                if (ms > 3600u && ms < 3680u && i == 4u)
                     lit = 0;             /* one tube stutters in the lightning */
                 if (lit) {
                     cv_text(x - 1, 69, f, c, RGB(110, 8, 8));
@@ -1997,16 +2039,16 @@ static void intro_band(int32_t y0, int32_t h, uint32_t ms)
                 int32_t sx = 120 - text_w(&FONT_B, s) / 2;
                 cv_rect(sx - 30, 108, 22, 1, C_RED);
                 cv_rect(sx + text_w(&FONT_B, s) + 8, 108, 22, 1, C_RED);
-                cv_text(sx, 101, &FONT_B, s, (ms / 50u) % 11u == 0u && ms < 3300u ? RGB(90, 20, 20) : RGB(255, 90, 80));
+                cv_text(sx, 101, &FONT_B, s, (ms / 50u) % 11u == 0u && ms > 3600u && ms < 3900u ? RGB(90, 20, 20) : RGB(255, 90, 80));
             }
             if (ms > 1700u && ms < 2400u) {   /* a scan passing over it */
                 int32_t sy = 60 + (int32_t)((ms - 1700u) / 14u);
                 cv_rect(0, sy, 240, 1, mix565(C_RED, C_BLACK, 120));
             }
         }
-        if (ms > 3150u) {
+        if (ms > 4300u) {
             const char *by = "by swtdr34mz";
-            uint32_t n = (ms - 3150u) / 40u, k;
+            uint32_t n = (ms - 4300u) / 40u, k;
             char t[16];
             for (k = 0; k < 15u && by[k] && k < n; k++)
                 t[k] = by[k];
@@ -2238,6 +2280,8 @@ int app_expect(const char *what, int *got)
         *got = set.arp_pat;
     else if (!strcmp(what, "heart_env"))   /* the heart beating now */
         *got = eng_heart_env() > 0.3f;
+    else if (!strcmp(what, "arp_hi"))
+        *got = set.arp_hi;
     else if (!strcmp(what, "size"))
         *got = set.size;
     else if (!strcmp(what, "bpm"))

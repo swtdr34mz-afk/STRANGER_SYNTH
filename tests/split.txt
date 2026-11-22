@@ -1,5 +1,10 @@
 # OFFWORLD: the low split, LOW HOLD, the melody that follows it, pressure
 wait 3200
+# (the start: THEME SEQUENCE's split and arp; here plain keys)
+tap SEL
+turn K1 -6
+expect split_oct 0
+tap SEL
 # SEL: the SPLIT page; SPLIT one octave down
 tap SEL
 expect page 1

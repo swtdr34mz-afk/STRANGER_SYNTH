@@ -5,11 +5,16 @@ wait 900
 shot intro.png
 expect intro 1
 expect preset 0
-expect m1 45
+expect m1 50
 expect arp 1
 # the arp off here: the keys play themselves
 tap ARP
 expect arp 0
+# (the start: THEME SEQUENCE's split and arp; here plain keys)
+tap SEL
+turn K1 -6
+expect split_oct 0
+tap SEL
 # a key ends the intro and plays: the night's sequence
 wav brass.wav
 key w4 down 110
@@ -52,7 +57,7 @@ tapkey w9 100
 wait 200
 expect latched 65536
 # K4 slowly to BRIGHT: the filter opens
-turn K4 90 90
+turn K4 24 90
 wait 300
 expect zone4 3
 expect m4 100

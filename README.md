@@ -94,3 +94,10 @@ SCREAM drives. The arp's tempo starts at 84 BPM (1/16).
   of detuned saws. FILTER opens much further now (BRIGHT, SCREAM).
 - **NOIR TAPE** replaces DARK BELLS (a hollow square synth from a worn tape: wobble, hiss, the highs gone).
 - **MONO ARP BASS** starts on the arp (UP-DOWN); **SYNC LEAD** wider, with a long hall.
+
+## v0.6.0
+
+- **THEME SEQUENCE** starts in the LOW SPLIT two octaves down (the left hand the bass) with the right hand on the arp
+  (UP-DOWN), the filter open. On the ARP page, with the split on, ARP tapped switches the hand the arp plays.
+- **The intro** runs about 4 s after the boot: the lightning strikes and in its light a vast eye of cloud turns over the
+  whole sky (our own), a second flash, then the name.

@@ -2,6 +2,11 @@
 wait 3200
 tapkey w0 100
 wait 400
+# (the start: THEME SEQUENCE's split and arp; here plain keys)
+tap SEL
+turn K1 -6
+expect split_oct 0
+tap SEL
 # ARP on: every key (the split is off), 1/16 at 84 BPM: a step every 179 ms, UP
 expect arp 1
 wav arp.wav
@@ -37,7 +42,7 @@ wait 300
 turn K3 -2
 turn K2 -2
 expect arp_pat 0
-# the low split: the arp plays the left hand, the right plays free and follows it
+# the low split: the arp plays the right hand (arp_hi), following the left
 tap HOME
 tap SEL
 turn K1 2
@@ -46,11 +51,12 @@ tap SEL
 expect page 0
 key 4 down 100
 wait 60
-expect arp_pitch 45
+expect kp4 45
 expect root 9
 key 7 down 100
 wait 50
 expect kp7 57
+expect arp_pitch 57
 key 7 up
 key 4 up
 wait 300

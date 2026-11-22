@@ -25,35 +25,35 @@ const macro_t MACROS[4] = {
  * the filter: breath, hiss) and PLUCK (the amp falls away however long the key is held: 1 a bell's decay).
  * Each in the manner of a classic 80s analogue or a sound of the film scores of the time: the names are our own. */
 const preset_t PRESETS[NPRESETS] = {
-    /* the theme: a wall of detuned saws, the sub, a resonant filter nearly shut (FILTER opens it, slowly: the build).
-     * It starts on the arp (UP-DOWN) and holds a deep root an octave under the lowest note: the bass that carries it */
-    {"THEME SEQUENCE", 0.0f, 0, 0.50f, 1.00f, 0.45f, 200.0f, 3.6f, 0.52f, 0.55f, {45, 60, 45, 25}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 1, 0.0f},
+    /* the theme: a wall of detuned saws, the sub, a resonant filter already open (FILTER: further, or shut it for a
+     * build). It starts in the LOW SPLIT two octaves down (the left hand the bass) and the right hand on the arp, UP-DOWN */
+    {"THEME SEQUENCE", 0.0f, 0, 0.50f, 1.00f, 0.45f, 230.0f, 3.4f, 0.48f, 0.60f, {50, 60, 50, 78}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f, 2, 1},
     /* kids on bikes, the Juno-60 way: one oscillator's saw and pulse together, the square sub an octave down, its
      * chorus (ENSEMBLE), and the notes ringing out long */
-    {"KIDS ON BIKES", 0.0f, 1, 0.55f, 0.75f, 0.45f, 2200.0f, 1.8f, 0.18f, 0.55f, {55, 70, 45, 80}, 0.0f, 0.05f, 0.55f, 0.0f, -1, 0, 0.0f},
+    {"KIDS ON BIKES", 0.0f, 1, 0.55f, 0.75f, 0.45f, 2200.0f, 1.8f, 0.18f, 0.55f, {55, 70, 45, 80}, 0.0f, 0.05f, 0.55f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* a lazy night: plucks with a sour tritone beside them, wide apart, wobbling: dark and wrong */
-    {"LAZY NIGHT", 6.25f, 0, 0.50f, 0.55f, 0.35f, 300.0f, 2.4f, 0.32f, 0.60f, {18, 80, 35, 35}, 0.15f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"LAZY NIGHT", 6.25f, 0, 0.50f, 0.55f, 0.35f, 300.0f, 2.4f, 0.32f, 0.60f, {18, 80, 35, 35}, 0.15f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* noir tape: a hollow square and a round body, no second harmonic, its highs gone; a fast wobble, hiss, a warm
      * room: a synth from a worn cassette, not a bell */
-    {"NOIR TAPE", 0.0f, 1, 0.50f, 0.85f, 0.15f, 900.0f, 0.8f, 0.12f, 0.40f, {60, 72, 70, 60}, 0.0f, 0.07f, 0.55f, 0.6f, -1, 0, 9.0f},
+    {"NOIR TAPE", 0.0f, 1, 0.50f, 0.85f, 0.15f, 900.0f, 0.8f, 0.12f, 0.40f, {60, 72, 70, 60}, 0.0f, 0.07f, 0.55f, 0.6f, -1, 0, 9.0f, 0, 0},
     /* chaos: a minor second grinding, ringing, warped; it swells out of the dark */
-    {"CHAOS", 1.0f, 0, 0.50f, 0.90f, 0.70f, 240.0f, 2.2f, 0.50f, 0.40f, {100, 100, 60, 30}, 0.30f, 0.05f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"CHAOS", 1.0f, 0, 0.50f, 0.90f, 0.70f, 240.0f, 2.2f, 0.50f, 0.40f, {100, 100, 60, 30}, 0.30f, 0.05f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* a five-voice poly brass from below: an octave down under it, slow, deep, a cathedral of reverb: horror */
-    {"FIVE BRASS", -12.0f, 0, 0.50f, 0.75f, 0.55f, 220.0f, 3.8f, 0.30f, 0.60f, {72, 60, 88, 45}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"FIVE BRASS", -12.0f, 0, 0.50f, 0.75f, 0.55f, 220.0f, 3.8f, 0.30f, 0.60f, {72, 60, 88, 45}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* the 106's strings: one pulse wide open, its chorus (ENSEMBLE) doing the rest */
-    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"CHORUS STRINGS", 0.0f, 1, 0.72f, 0.65f, 0.15f, 900.0f, 1.6f, 0.08f, 0.40f, {90, 70, 42, 55}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* the model D's bass: two saws an octave apart, the sub, a fat ladder filter; it starts on the arp, up and down */
-    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f},
+    {"MODEL BASS", -12.0f, 0, 0.50f, 0.85f, 0.70f, 150.0f, 4.0f, 0.48f, 0.70f, {20, 15, 10, 40}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f, 0, 0},
     /* the OB's brass: wide, bright, a little wild */
-    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"OB BRASS", 0.0f, 0, 0.50f, 1.00f, 0.25f, 380.0f, 3.8f, 0.15f, 0.60f, {50, 75, 33, 70}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* the Prophet-6's pad: saw and a fifth above in pulse, slow and wide */
-    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* the 101's arp bass: one pulse and the sub, squelchy; it starts on the arp, up and down */
-    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f},
+    {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f, 0, 0},
     /* an epic lead an octave up: resonant, wide, a long hall and a canyon behind it */
-    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.15f, 450.0f, 3.5f, 0.50f, 0.75f, {48, 70, 108, 80}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.15f, 450.0f, 3.5f, 0.50f, 0.75f, {48, 70, 108, 80}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* a choir from tape: hollow pulses, slow, far away */
-    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f, 0.0f, -1, 0, 0.0f},
+    {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
 };
 
 /* a curve: breakpoints (x 0..127, y), x rising, straight lines between them */

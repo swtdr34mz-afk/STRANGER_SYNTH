@@ -48,6 +48,8 @@ typedef struct {
     int8_t arp;                          /* the arp it starts with (ARP_*), -1: as it is */
     uint8_t deep;                        /* 1: with the arp, a deep root held an octave under its lowest note */
     float wob;                           /* WOBBLE: a fast vibrato from the start, cents */
+    uint8_t split;                       /* the LOW SPLIT it starts with, octaves down (0: as it is) */
+    uint8_t arp_hi;                      /* 1: its arp plays the right hand (with the split on) */
 } preset_t;
 #define NPRESETS 13
 extern const preset_t PRESETS[NPRESETS];
