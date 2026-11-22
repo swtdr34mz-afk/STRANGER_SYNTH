@@ -100,4 +100,4 @@ SCREAM drives. The arp's tempo starts at 84 BPM (1/16).
 - **THEME SEQUENCE** starts in the LOW SPLIT two octaves down (the left hand the bass) with the right hand on the arp
   (UP-DOWN), the filter open. On the ARP page, with the split on, ARP tapped switches the hand the arp plays.
 - **The intro** runs about 4 s after the boot: the lightning strikes and in its light a vast eye of cloud turns over the
-  whole sky (our own), a second flash, then the name.
+  whole sky (our own), a second flash, then the name. (v0.6.2: the eye became roots hanging from the clouds.)
