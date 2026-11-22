@@ -4,6 +4,8 @@ A performance synth for the M-VAVE FM-1 by **swtdr34mz**, in the spirit of 80s a
 [OFFWORLD](https://github.com/swtdr34mz-afk/OFFWORLD), built on [fm1-base](https://github.com/charlesvestal/fm1-base)
 and [felucca-bsp](https://github.com/hugelton/felucca-bsp).
 
+![STRANGER SYNTH](site/img/screen-main.png) ![The title](site/img/screen-splash.png) ![The mirror](site/img/screen-mirror.png)
+
 **Work in progress.** Unofficial: not made or supported by M-VAVE; at your own risk.
 
 ## Plan
@@ -13,7 +15,7 @@ and [felucca-bsp](https://github.com/hugelton/felucca-bsp).
 3. Presets in the style of classic 80s poly and mono synths (done: v0.0.3)
 4. CHORD mode with sidechain, TONE FOLLOW (to the low split or the chords) (done: v0.0.3)
 5. Performance FX: tape stop, VHS wobble, tape rewind, gated reverb, tape echo throw, lights out, walkie, riser (done: v0.0.3)
-6. The screen: a small town at night, the mirror world
+6. The screen: a small town at night, the mirror world (done: v0.1.0)
 7. SIX MACHINES sends MIDI clock and its kick as the sidechain trigger
 
 ## Build
@@ -42,3 +44,12 @@ GitHub Actions builds the `.fwsc` on every push (Actions > the run > Artifacts) 
 - **PERFORM** (FX tapped; or FX held + a key on any page): the lowest eight white keys switch the effects:
   TAPE STOP, VHS, REWIND (once), GATED reverb, ECHO throw, LIGHTS OUT, WALKIE, RISER. The knobs stay the macros.
 - **REC** tapped: TAPE STOP (again: it spins back up). REC held 1 s: every note off.
+
+## The screen (v0.1.0)
+
+- **The intro**: a VCR wakes up, a red storm rises over the trees and houses, a bike crosses, the title buzzes on in red neon.
+- **Eight places**, one night (a VCR clock in the corner), cut with a tape tear and colour bars every 18 to 35 s:
+  MAPLE LANE, THE WOODS, THE LAB, ROUTE 9, THE BASEMENT, THE SKY, RADIO TOWER, THE ARCADE. Windows, lamps, headlights,
+  fireflies, arcade screens and sparks follow the notes; in the red storm the notes bring lightning.
+- **The MIRROR**: while PERFORM effects play, the picture turns over into a cold, dark copy of itself, red at the
+  brightest, ash floating up, the tracking line rolling. All drawn here; no figures, logos or images from any film or show.
