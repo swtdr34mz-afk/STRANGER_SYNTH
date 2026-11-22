@@ -1,0 +1,136 @@
+# STRANGER SYNTH: the ARPEGGIATOR (ARP), its page (LFO), with the low split, MIDI clock
+wait 3200
+tapkey w0 100
+wait 400
+# ARP on: every key (the split is off), 1/16 at 110 BPM: a step every 136 ms, UP
+tap ARP
+expect arp 1
+wav arp.wav
+key 0 down 100
+key 4 down 100
+wait 60
+expect arp_pitch 53
+wait 136
+expect arp_pitch 57
+wait 136
+expect arp_pitch 53
+expect voices_max_ok 1
+key 0 up
+key 4 up
+wait 300
+wavstop
+expect arp_notes 0
+# the ARP page: PATTERN to DOWN, OCTAVES 2
+tap LFO
+expect page 6
+turn K2 2
+expect arp_pat 1
+turn K3 2
+expect arp_oct 2
+shot arp_page.png
+key 0 down 100
+wait 60
+expect arp_pitch 65
+wait 136
+expect arp_pitch 53
+key 0 up
+wait 300
+turn K3 -2
+turn K2 -2
+expect arp_pat 0
+# the low split: the arp plays the left hand, the right plays free and follows it
+tap HOME
+tap SEL
+turn K1 2
+expect split_oct 1
+tap SEL
+expect page 0
+key 4 down 100
+wait 60
+expect arp_pitch 45
+expect root 9
+key 7 down 100
+wait 50
+expect kp7 57
+key 7 up
+key 4 up
+wait 300
+# MIDI clock: START, then 24 ticks a quarter at 120 BPM; a 1/16 step every 6 ticks
+key 4 down 100
+wait 50
+midi FA
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+midi F8
+wait 19
+expect arp_ext 1
+shot arp.png
+midi FC
+key 4 up
+wait 800
+expect arp_ext 0
+# ARP held 1 s: EPIC (the arp stays)
+expect epic 0
+press ARP
+wait 1100
+release ARP
+expect epic 1
+expect arp 1
+tap ARP
+expect arp 0

@@ -15,7 +15,9 @@
  *   SELECT          TONE              ALGORITHM  VIBRATO
  *   PLAY            DRONE: every note stays (a key with no key down on its side starts a new chord), a deep root
  *   SEQ             LOW HOLD: the low split's notes stay (a new low note replaces them); the right hand plays free
- *   ARP             EPIC: root, fifth and octave from one finger
+ *   ARP             the ARPEGGIATOR on / off (with the split on it plays the low split, else every key);
+ *                   held 1 s: EPIC (root, fifth and octave from one finger)
+ *   LFO             the ARP page: RATE, PATTERN, OCTAVES, GATE; SELECT there: the tempo (BPM; MIDI clock in wins)
  *   REC held 1 s    every note let go
  * The melody: with the split on and FOLLOW on, the right hand plays in SCALE from the low split's note (the lowest
  * that sounds, or the last one): SNAP moves every key to the scale's note at or below it, WHITE puts the scale on the
@@ -23,7 +25,7 @@
 #include "fastmath.h"
 #include "engine.h"
 
-#define SET_MAGIC 0x32574F46u            /* "FOW2" (0.4): the settings record; FOW1 (0.1 .. 0.3) is taken over */
+#define SET_MAGIC 0x31595353u            /* "SSY1": STRANGER SYNTH's settings record (an OFFWORLD's is not taken over) */
 #define NCUE 8
 #define CUE_NOTES 6
 typedef struct {
@@ -50,17 +52,13 @@ typedef struct {
     uint8_t cue_auto;
     uint8_t cue_n[NCUE];                 /* each cue's notes: how many, which (MIDI) */
     uint8_t cue_p[NCUE][CUE_NOTES];
+    uint8_t arp;                         /* the ARPEGGIATOR on / off */
+    uint8_t arp_rate, arp_pat, arp_oct;  /* RATE_*, ARP_*, octaves 1..4 */
+    uint8_t arp_gate;                    /* 5 .. 100 % of a step */
+    uint8_t bpm;                         /* its own tempo 40 .. 240 */
     uint8_t rsv[2];
 } settings_t;
 
-/* 0.1 .. 0.3's record (FOW1: eight presets, RAIN CITY the second; 48 bytes before GLIDE, 52 with it) */
-typedef struct {
-    uint32_t magic;
-    uint8_t m[8][4];
-    uint8_t preset, tone, vib, octave, epic, split_oct, split_key, scale, follow, press, pamt;
-    uint8_t glide_l, mode_l, glide_h, mode_h, rsv;
-} settings_v1_t;
-#define SET_MAGIC_V1 0x31574F46u
 static settings_t set;
 static uint8_t set_dirty;
 static uint32_t dirty_at;
@@ -73,6 +71,7 @@ static uint32_t dirty_at;
 #define C_AMBER RGB(255, 170, 60)
 #define C_FIRE RGB(255, 120, 30)
 #define C_RAIN RGB(110, 130, 168)
+#define C_RED RGB(255, 40, 40)
 
 /* ------------------------------------------------------------------ scales --- */
 typedef struct {
@@ -142,6 +141,12 @@ static void settings_defaults(void)
     settings_v2();
     settings_v3();
     settings_v4();
+    set.arp = 0;
+    set.arp_rate = RATE_16;
+    set.arp_pat = ARP_UP;
+    set.arp_oct = 1;
+    set.arp_gate = 50;
+    set.bpm = 110;
 }
 
 static int cues_ok(void)
@@ -165,60 +170,17 @@ static int settings_ok(void)
            set.split_key < NKEYS && set.scale < NSCALE && set.follow < NFOLLOW && set.press < NPRESS &&
            set.pamt <= 100u && set.glide_l <= 100u && set.glide_h <= 100u && set.mode_l < NGMODE && set.mode_h < NGMODE &&
            set.city <= 100u && set.story <= 1u && set.logs <= 1u && set.cue_fade <= 100u && set.cue_hold >= 4u &&
-           set.cue_hold <= 60u && set.cue_auto <= 1u && cues_ok();
+           set.cue_hold <= 60u && set.cue_auto <= 1u && cues_ok() && set.arp <= 1u && set.arp_rate < NRATE &&
+           set.arp_pat < NARPPAT && set.arp_oct >= 1u && set.arp_oct <= 4u && set.arp_gate >= 5u && set.arp_gate <= 100u &&
+           set.bpm >= 40u && set.bpm <= 240u;
 }
 
 static void settings_load(void)
 {
-    static union {
-        settings_t now;
-        settings_v1_t v1;
-        uint8_t b[sizeof(settings_t) > sizeof(settings_v1_t) ? sizeof(settings_t) : sizeof(settings_v1_t)];
-    } u;
     int r;
-    memset(&u, 0, sizeof u);
-    r = plat_store_load(OBJ_SETTINGS, &u, sizeof u);
-    if (r == (int)sizeof(settings_t) && u.now.magic == SET_MAGIC) {
-        set = u.now;
-    } else if ((r == 48 || r == (int)sizeof(settings_v1_t)) && u.v1.magic == SET_MAGIC_V1) {
-        /* an older OFFWORLD's: its knobs and settings kept, RAIN CITY (the second preset) gone */
-        const settings_v1_t *o = &u.v1;
-        uint32_t i, j = 0, k;
-        settings_defaults();
-        for (i = 0; i < 8u; i++) {
-            if (i == 1u)
-                continue;
-            for (k = 0; k < 4u; k++)
-                set.m[j][k] = o->m[i][k];
-            j++;
-        }
-        set.m[3][0] = PRESETS[3].m[0];   /* LAST SUNRISE is a new sound: its knobs as it comes */
-        set.m[3][1] = PRESETS[3].m[1];
-        set.m[3][2] = PRESETS[3].m[2];
-        set.m[3][3] = PRESETS[3].m[3];
-        set.preset = (uint8_t)(o->preset > 1u ? o->preset - 1u : 0u);
-        set.tone = (int8_t)o->tone;
-        set.vib = o->vib;
-        set.octave = (int8_t)o->octave;
-        set.epic = o->epic;
-        if (o->split_key) {              /* 0.2 and on */
-            set.split_oct = o->split_oct;
-            set.split_key = o->split_key;
-            set.scale = o->scale;
-            set.follow = o->follow;
-            set.press = o->press;
-            set.pamt = o->pamt;
-        }
-        if (r == (int)sizeof(settings_v1_t)) {   /* 0.3 */
-            set.glide_l = o->glide_l;
-            set.mode_l = o->mode_l;
-            set.glide_h = o->glide_h;
-            set.mode_h = o->mode_h;
-        }
-        set_dirty = 1;
-    } else
-        settings_defaults();
-    if (!settings_ok())
+    memset(&set, 0, sizeof set);
+    r = plat_store_load(OBJ_SETTINGS, &set, sizeof set);
+    if (r != (int)sizeof(settings_t) || set.magic != SET_MAGIC || !settings_ok())
         settings_defaults();
 }
 
@@ -306,7 +268,7 @@ static void knobs_from_settings(void)
 }
 
 /* ---------------------------------------------------------------------- UI --- */
-enum { PG_MAIN, PG_SPLIT, PG_PRESS, PG_GLIDE, PG_WORLD, PG_CUES, NPAGE };
+enum { PG_MAIN, PG_SPLIT, PG_PRESS, PG_GLIDE, PG_WORLD, PG_CUES, PG_ARP, NPAGE };
 enum { SIDE_L, SIDE_R };
 static struct {
     char msg[2][24];
@@ -322,7 +284,7 @@ static struct {
     uint8_t drone, lowhold, page;
     uint8_t root;                        /* the melody's root: the low split's note, 0..11 */
     float deep;                          /* the deep root's pitch (0: none) */
-    uint32_t rec_t, home_t, sel_t;
+    uint32_t rec_t, home_t, sel_t, arp_t;
     uint8_t sel_used;
     uint32_t enc_at[NE];
     int32_t enc_acc[4];
@@ -492,6 +454,35 @@ static int key_pitch(uint32_t k, float *p)
     return 1;
 }
 
+/* the ARPEGGIATOR: with the split on it takes the low split's notes, else every key's. Its keys start no voice of
+ * their own; what they hold (pressed, or staying with LOW HOLD / DRONE) goes to the engine, which plays it */
+static int arp_side(int side) { return set.arp && (!split_on() || side == SIDE_L); }
+static int arp_key(uint32_t k) { return arp_side(side_of(k)); }
+static void arp_cfg(void)
+{
+    eng_arp(set.arp, set.arp_rate, set.arp_pat, set.arp_oct, (float)set.arp_gate / 100.0f, (float)set.bpm);
+}
+static void arp_push(void)               /* the arp's notes, in the order they were played */
+{
+    float p[ARP_MAX], v[ARP_MAX];
+    uint8_t ks[ARP_MAX];
+    uint32_t k, n = 0, i, j;
+    for (k = 0; k < NKEYS && n < ARP_MAX; k++)
+        if ((ui.sounding >> k & 1u) && arp_key(k))
+            ks[n++] = (uint8_t)k;
+    for (i = 1; i < n; i++)
+        for (j = i; j > 0 && ui.ptime[ks[j]] < ui.ptime[ks[j - 1]]; j--) {
+            uint8_t t = ks[j];
+            ks[j] = ks[j - 1];
+            ks[j - 1] = t;
+        }
+    for (i = 0; i < n; i++) {
+        p[i] = ui.kp[ks[i]];
+        v[i] = (float)ui.kvel[ks[i]] / 127.0f;
+    }
+    eng_arp_notes(p, v, (int)n);
+}
+
 static int gmode(int side) { return side == SIDE_L ? set.mode_l : set.mode_h; }
 static float gl_secs(uint32_t v) { return (float)(v * v) * (3.0f / 10000.0f); }   /* 0..100: 0..3 s, fine at the start */
 static float gtime(int side) { return gl_secs(side == SIDE_L ? set.glide_l : set.glide_h); }
@@ -555,6 +546,11 @@ static void key_start(uint32_t k, uint8_t vel)
     ui.kp[k] = p;
     ui.kvel[k] = vel;
     ui.ptime[k] = ++ui.pcount;
+    if (arp_side(side)) {                /* the arp plays it */
+        ui.sounding |= 1u << k;
+        arp_push();
+        return;
+    }
     m = ui.mono[side] ? ui.mono[side] - 1u : 99u;
     if (mode != GM_POLY && m < NKEYS && m != k && (ui.sounding >> m & 1u)) {   /* legato: the voice slides here */
         notes_move(m, k, p, v, g);
@@ -574,6 +570,12 @@ static void key_start(uint32_t k, uint8_t vel)
 static void key_stop(uint32_t k)
 {
     int side = side_of(k);
+    if (arp_side(side)) {
+        ui.sounding &= ~(1u << k);
+        ui.prs[k] = 0;
+        arp_push();
+        return;
+    }
     eng_note_off((int)k);
     eng_note_off(100 + (int)k);
     eng_note_off(200 + (int)k);
@@ -656,7 +658,7 @@ static void key_release(uint32_t k)
     int side = side_of(k);
     if (holds(side) && (ui.latched >> k & 1u)) {
         /* it stays */
-    } else if (gmode(side) != GM_POLY && ui.mono[side] == k + 1u) {   /* MONO: back to the last key still held */
+    } else if (!arp_side(side) && gmode(side) != GM_POLY && ui.mono[side] == k + 1u) {   /* MONO: back to the last key still held */
         uint32_t j, best = 99u, bt = 0, held = ui.keys & side_mask(side) & ~(1u << k);
         float p;
         for (j = 0; j < NKEYS; j++)
@@ -695,6 +697,7 @@ static void holds_changed(void)          /* DRONE or LOW HOLD switched: what no 
     latched_release(~keep & ~ui.keys);
     ui.latched &= keep;
     ui.latched |= ui.keys & ui.sounding & keep;   /* the keys down now stay */
+    arp_push();
     root_update();
     deep_update();
     ui.head_redraw = 1;
@@ -706,6 +709,27 @@ static void all_off(void)
     ui.latched = 0;
     ui.sounding = 0;
     ui.deep = 0.0f;
+    arp_push();
+}
+
+/* the ARPEGGIATOR on / off: what sounds lets go, the keys still down start again the new way */
+static void arp_toggle(void)
+{
+    uint32_t k, held = ui.keys;
+    for (k = 0; k < NKEYS; k++)
+        if (ui.sounding >> k & 1u)
+            key_stop(k);
+    ui.latched = 0;
+    ui.mono[0] = ui.mono[1] = 0;
+    set.arp = (uint8_t)!set.arp;
+    arp_cfg();
+    for (k = 0; k < NKEYS; k++)
+        if (held >> k & 1u)
+            key_press(k, ui.kvel[k] ? ui.kvel[k] : 100u, held & ((1u << k) - 1u));
+    arp_push();
+    dirty();
+    app_say("ARP", set.arp ? "ON" : "OFF");
+    ui.head_redraw = 1;
 }
 
 /* ------------------------------------------------------------------- cues --- */
@@ -857,12 +881,15 @@ static void weather(void)                /* the night moves on: the rain with it
 
 /* ------------------------------------------------------------------ pages --- */
 /* the knobs of SPLIT and PRESSURE: a value, its range, its text */
-static const char *const PAGE_NAME[NPAGE] = {"MAIN", "SPLIT", "PRESSURE", "GLIDE", "WORLD", "CUES"};
-static const char *const PK_NAME[5][4] = {{"SPLIT", "POINT", "SCALE", "FOLLOW"},
+static const char *const PAGE_NAME[NPAGE] = {"MAIN", "SPLIT", "PRESSURE", "GLIDE", "WORLD", "CUES", "ARP"};
+static const char *const RATE_NAME[NRATE] = {"1/4", "1/8", "1/8T", "1/16", "1/16T", "1/32"};
+static const char *const PAT_NAME[NARPPAT] = {"UP", "DOWN", "UP-DOWN", "PLAYED", "RANDOM"};
+static const char *const PK_NAME[6][4] = {{"SPLIT", "POINT", "SCALE", "FOLLOW"},
                                           {"PRESSURE", "AMOUNT", "TONE", "VIBRATO"},
                                           {"LOW GLIDE", "LOW MODE", "GLIDE", "MODE"},
                                           {"CITY", "STORY", "LOGS", "TIME"},
-                                          {"CUE", "FADE", "HOLD", "AUTO"}};
+                                          {"CUE", "FADE", "HOLD", "AUTO"},
+                                          {"RATE", "PATTERN", "OCTAVES", "GATE"}};
 static void cue_play(uint32_t c);
 static void world_level(void);
 static void story_set(int32_t step);
@@ -878,14 +905,17 @@ static int32_t pk_get(int pg, int k)
         return k == 0 ? set.city : k == 1 ? set.story : k == 2 ? set.logs : story_step();
     if (pg == PG_CUES)
         return k == 0 ? ui.cue_sel : k == 1 ? set.cue_fade : k == 2 ? set.cue_hold : set.cue_auto;
+    if (pg == PG_ARP)
+        return k == 0 ? set.arp_rate : k == 1 ? set.arp_pat : k == 2 ? set.arp_oct : set.arp_gate;
     return k == 0 ? set.press : k == 1 ? set.pamt : k == 2 ? set.tone : set.vib;
 }
 
 static void pk_range(int pg, int k, int32_t *lo, int32_t *hi)
 {
-    static const int8_t LO[5][4] = {{0, 1, 0, 0}, {0, 0, -50, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 4, 0}};
-    static const int8_t HI[5][4] = {{3, NKEYS - 1, NSCALE - 1, NFOLLOW - 1}, {NPRESS - 1, 100, 50, 100},
-                                    {100, NGMODE - 1, 100, NGMODE - 1}, {100, 1, 1, 71}, {NCUE, 100, 60, 1}};
+    static const int8_t LO[6][4] = {{0, 1, 0, 0}, {0, 0, -50, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 4, 0}, {0, 0, 1, 5}};
+    static const int8_t HI[6][4] = {{3, NKEYS - 1, NSCALE - 1, NFOLLOW - 1}, {NPRESS - 1, 100, 50, 100},
+                                    {100, NGMODE - 1, 100, NGMODE - 1}, {100, 1, 1, 71}, {NCUE, 100, 60, 1},
+                                    {NRATE - 1, NARPPAT - 1, 4, 100}};
     *lo = LO[pg - 1][k];
     *hi = HI[pg - 1][k];
 }
@@ -894,6 +924,17 @@ static void pk_text(int pg, int k, char *t)
 {
     int32_t v = pk_get(pg, k);
     t[0] = 0;
+    if (pg == PG_ARP) {
+        if (k == 0)
+            text_cat(t, RATE_NAME[v]);
+        else if (k == 1)
+            text_cat(t, PAT_NAME[v]);
+        else {
+            int_text(v, t);
+            text_cat(t, k == 2 ? (v > 1 ? " OCTS" : " OCT") : "%");
+        }
+        return;
+    }
     if (pg == PG_SPLIT) {
         if (k == 0) {
             if (!v)
@@ -980,7 +1021,17 @@ static void pk_text(int pg, int k, char *t)
 static void pk_set(int pg, int k, int32_t v)
 {
     char t[16];
-    if (pg == PG_SPLIT) {
+    if (pg == PG_ARP) {
+        if (k == 0)
+            set.arp_rate = (uint8_t)v;
+        else if (k == 1)
+            set.arp_pat = (uint8_t)v;
+        else if (k == 2)
+            set.arp_oct = (uint8_t)v;
+        else
+            set.arp_gate = (uint8_t)v;
+        arp_cfg();
+    } else if (pg == PG_SPLIT) {
         if (k == 0) {
             if (set.split_oct && !v)     /* the split off: the low part's hold goes */
                 ui.lowhold = 0;
@@ -1056,7 +1107,8 @@ static void page_knob(int k, int32_t e)
 {
     int pg = ui.page;
     int32_t lo, hi, v = pk_get(pg, k), list = (pg == PG_SPLIT && k != 1) || (pg == PG_PRESS && k == 0) || (pg == PG_GLIDE && (k & 1)) ||
-                                                 (pg == PG_WORLD && (k == 1 || k == 2)) || (pg == PG_CUES && (k == 0 || k == 3));
+                                                 (pg == PG_WORLD && (k == 1 || k == 2)) || (pg == PG_CUES && (k == 0 || k == 3)) ||
+                                                 (pg == PG_ARP && k < 3);
     pk_range(pg, k, &lo, &hi);
     if (list) {                          /* a list: two detents a step */
         ui.enc_acc[k] += e;
@@ -1216,12 +1268,9 @@ static void input(void)
             }
             holds_changed();
             app_say("LOW HOLD", ui.lowhold ? "ON" : "OFF");
-        } else if (k == B_ARP) {
-            set.epic = (uint8_t)!set.epic;
-            dirty();
-            app_say("EPIC", set.epic ? "ON" : "OFF");
-            ui.head_redraw = 1;
-        } else if (k == B_OCTDN || k == B_OCTUP)
+        } else if (k == B_ARP)
+            ui.arp_t = now;
+        else if (k == B_OCTDN || k == B_OCTUP)
             octave(k == B_OCTUP ? 1 : -1);
         else if (k == B_REC)
             ui.rec_t = now;
@@ -1232,7 +1281,7 @@ static void input(void)
         else if (k == B_ENV)
             page_go(ui.page == PG_CUES ? PG_MAIN : PG_CUES);
         else if (k == B_LFO)
-            app_say("LFO", "COMING SOON");
+            page_go(ui.page == PG_ARP ? PG_MAIN : PG_ARP);
         else if (k == B_HOME) {
             if (now - ui.home_last < 400u) {   /* twice: the controls, drawn */
                 ui.sheet = 1;
@@ -1272,6 +1321,18 @@ static void input(void)
             app_say("CUES", "CLEARED");
         }
     }
+    if (ui.arp_t) {                      /* ARP: a tap the arpeggiator, held 1 s EPIC */
+        if (!(btn >> B_ARP & 1u)) {
+            ui.arp_t = 0;
+            arp_toggle();
+        } else if (now - ui.arp_t >= 1000u) {
+            ui.arp_t = 0;
+            set.epic = (uint8_t)!set.epic;
+            dirty();
+            app_say("EPIC", set.epic ? "ON" : "OFF");
+            ui.head_redraw = 1;
+        }
+    }
     if (ui.rec_t) {
         if (!(btn >> B_REC & 1u)) {      /* a tap: MEMORY, the last seconds frozen / let go */
             ui.rec_t = 0;
@@ -1303,7 +1364,15 @@ static void input(void)
             if (ui.intro)
                 ui.intro = 2;
         }
-    if ((e = plat_enc(EN_SELECT)) != 0) {
+    if ((e = plat_enc(EN_SELECT)) != 0 && ui.page == PG_ARP) {   /* on the ARP page: the tempo */
+        char t[8];
+        set.bpm = (uint8_t)clamp((int32_t)set.bpm + accel(EN_SELECT, e, 2, 5), 40, 240);
+        arp_cfg();
+        dirty();
+        int_text(set.bpm, t);
+        app_say(eng_clock_ext() ? "BPM (EXT)" : "BPM", t);
+        ui.redraw = 1;
+    } else if (e != 0) {
         char t[8];
         set.tone = (int8_t)clamp((int32_t)set.tone + accel(EN_SELECT, e, 2, 4), -50, 50);
         sound();
@@ -1436,14 +1505,15 @@ static void draw_head(void)
     int lit = !(film.flicker && (film.frame & 4u));
     int32_t x = 6;
     cv_begin(240, 24, C_BLACK);
-    cv_text(x + 1, 5, &FONT_B, "OFF", RGB(120, 20, 90));
-    cv_text(x, 4, &FONT_B, "OFF", C_CYAN);
-    x += text_w(&FONT_B, "OFF");
-    cv_text(x + 1, 5, &FONT_B, "WORLD", lit ? RGB(120, 20, 90) : C_BLACK);
-    cv_text(x, 4, &FONT_B, "WORLD", lit ? C_CYAN : RGB(30, 50, 70));
-    cv_text(100, 7, &FONT_XS, "DRONE", ui.drone ? C_AMBER : RGB(60, 50, 50));
-    cv_text(136, 7, &FONT_XS, "LOW", ui.lowhold ? C_AMBER : RGB(60, 50, 50));
-    cv_text(160, 7, &FONT_XS, "EPIC", set.epic ? C_MAG : RGB(60, 40, 55));
+    cv_text(x + 1, 5, &FONT_B, "STRAN", RGB(110, 10, 10));
+    cv_text(x, 4, &FONT_B, "STRAN", C_RED);
+    x += text_w(&FONT_B, "STRAN");
+    cv_text(x + 1, 5, &FONT_B, "GER", lit ? RGB(110, 10, 10) : C_BLACK);
+    cv_text(x, 4, &FONT_B, "GER", lit ? C_RED : RGB(60, 20, 20));
+    cv_text(76, 7, &FONT_XS, "DRONE", ui.drone ? C_AMBER : RGB(60, 50, 50));
+    cv_text(110, 7, &FONT_XS, "LOW", ui.lowhold ? C_AMBER : RGB(60, 50, 50));
+    cv_text(132, 7, &FONT_XS, "ARP", set.arp ? C_RED : RGB(60, 40, 40));
+    cv_text(154, 7, &FONT_XS, "EPIC", set.epic ? C_MAG : RGB(60, 40, 55));
     t[0] = 'O';
     t[1] = 'C';
     t[2] = 'T';
@@ -1522,7 +1592,15 @@ static void draw_panel(void)
         }
     }
     t[0] = 0;
-    if (split_on() && set.follow != FOLLOW_OFF) {   /* the melody's key */
+    if (ui.page == PG_ARP) {             /* the tempo: its own, or EXT (MIDI clock in) */
+        if (eng_clock_ext())
+            text_cat(t, "EXT CLOCK  ");
+        else {
+            int_text(set.bpm, n);
+            text_cat(t, n);
+            text_cat(t, " BPM  ");
+        }
+    } else if (split_on() && set.follow != FOLLOW_OFF) {   /* the melody's key */
         text_cat(t, NOTE_NAME[ui.root]);
         text_cat(t, " ");
         text_cat(t, SCALES[set.scale].name);
@@ -1584,6 +1662,7 @@ static void draw_sheet(void)
     static const char *const KN[NPAGE][4] = {
         {"SWELL", "DRIFT", "SPACE", "RAIN"},  {"SPLIT", "POINT", "SCALE", "FOLLOW"}, {"PRESS", "AMOUNT", "TONE", "VIB"},
         {"LO GLIDE", "LO MODE", "GLIDE", "MODE"}, {"CITY", "STORY", "LOGS", "TIME"},   {"CUE", "FADE", "HOLD", "AUTO"},
+        {"RATE", "PATTERN", "OCTAVES", "GATE"},
     };
     uint32_t i;
     cv_begin(240, 120, C_BLACK);
@@ -1611,12 +1690,12 @@ static void draw_sheet(void)
     sheet_btn(4, 94, "GLO", "PRESSURE", ui.page == PG_PRESS);
     sheet_btn(62, 94, "HOME", "MAIN", ui.page == PG_MAIN);
     sheet_btn(120, 94, "SAVE", "KEEP CUE", 0);
-    sheet_btn(178, 94, "LFO", "SOON", 0);
+    sheet_btn(178, 94, "LFO", "ARP PAGE", ui.page == PG_ARP);
     cv_blit(0, 24);
     cv_begin(240, 96, C_BLACK);
     sheet_btn(4, 2, "PLAY", "DRONE", ui.drone);
     sheet_btn(62, 2, "SEQ", "LOW HOLD", ui.lowhold);
-    sheet_btn(120, 2, "ARP", "EPIC", set.epic);
+    sheet_btn(120, 2, "ARP", "ARP/EPIC", set.arp);
     sheet_btn(178, 2, "REC", "MEMORY", ui.memory);
     sheet_btn(4, 30, "OCT-/+", "OCTAVE", set.octave != 0);
     sheet_btn(62, 30, "REC 1s", "ALL OFF", 0);
@@ -1775,6 +1854,7 @@ void app_init(void)
     settings_load();
     knobs_from_settings();
     sound();
+    arp_cfg();
 }
 
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
@@ -1819,6 +1899,10 @@ void app_frame(void)
         uint32_t st = (pkt >> 8) & 0xFFu, d1 = (pkt >> 16) & 0x7Fu, d2 = (pkt >> 24) & 0x7Fu;
         int id = MIDI_ID + (int)d1;
         (void)port;
+        if (st == 0xF8u || st == 0xFAu || st == 0xFBu || st == 0xFCu) {   /* MIDI clock: the arp follows it */
+            eng_clock(st == 0xF8u ? CLK_TICK : st == 0xFAu ? CLK_START : st == 0xFBu ? CLK_CONT : CLK_STOP);
+            continue;
+        }
         if ((st & 0xF0u) == 0x90u && d2) {
             eng_note_on(id, (float)d1, (float)d2 / 127.0f);
             if (set.epic) {
@@ -1942,6 +2026,29 @@ int app_expect(const char *what, int *got)
         *got = ui.lowhold;
     else if (!strcmp(what, "epic"))
         *got = set.epic;
+    else if (!strcmp(what, "arp"))
+        *got = set.arp;
+    else if (!strcmp(what, "arp_steps"))
+        *got = (int)eng_arp_steps();
+    else if (!strcmp(what, "arp_pitch"))
+        *got = (int)(eng_arp_pitch() + 0.5f);
+    else if (!strcmp(what, "arp_rate"))
+        *got = set.arp_rate;
+    else if (!strcmp(what, "arp_pat"))
+        *got = set.arp_pat;
+    else if (!strcmp(what, "bpm"))
+        *got = set.bpm;
+    else if (!strcmp(what, "arp_oct"))
+        *got = set.arp_oct;
+    else if (!strcmp(what, "arp_ext"))
+        *got = eng_clock_ext();
+    else if (!strcmp(what, "arp_notes")) {   /* the keys the arp holds */
+        uint32_t k, n = 0;
+        for (k = 0; k < NKEYS; k++)
+            n += (ui.sounding >> k & 1u) && arp_key(k);
+        *got = (int)n;
+    } else if (!strcmp(what, "voices_max_ok"))   /* the arp: never more than two of its voices at once */
+        *got = eng_voices() <= 3;
     else if (!strcmp(what, "octave"))
         *got = set.octave;
     else if (!strcmp(what, "tone"))

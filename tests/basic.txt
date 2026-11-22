@@ -1,4 +1,4 @@
-# OFFWORLD in the host simulator:
+# STRANGER SYNTH in the host simulator:
 #   X0X_FONTSET=terminus python3 fm1-base/tools/build.py . --host, then build/host/stranger_synth_host tests/basic.txt build/host
 splashshot splash.png
 wait 900
@@ -41,8 +41,10 @@ tapkey w2 100
 wait 200
 expect latched 16
 expect deep 45
-# EPIC: root, fifth and octave
-tap ARP
+# EPIC (ARP held 1 s): root, fifth and octave
+press ARP
+wait 1100
+release ARP
 expect epic 1
 tapkey w9 100
 wait 200

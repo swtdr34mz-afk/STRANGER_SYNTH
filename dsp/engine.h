@@ -72,6 +72,21 @@ void eng_panic(void);                    /* silence now */
 void eng_shed(void);                     /* the render ran late: a voice let go quickly (audio interrupt) */
 void eng_render(int32_t *lr, uint32_t n, float gain);
 
+/* the ARPEGGIATOR (STRANGER SYNTH): it runs in the render, so its steps land on time (a block, 5.8 ms, at most late,
+ * never drifting). The app gives it the notes held for it, in the order they were played; it plays them one at a
+ * time, RATE a step, in PATTERN, over OCTAVES, each sounding GATE of its step. With MIDI clock coming in (24 a quarter)
+ * it follows the clock (START from the first step, STOP silent); else its own tempo, BPM. */
+enum { ARP_UP, ARP_DOWN, ARP_UPDOWN, ARP_PLAYED, ARP_RANDOM, NARPPAT };
+enum { RATE_4, RATE_8, RATE_8T, RATE_16, RATE_16T, RATE_32, NRATE };
+#define ARP_MAX 16
+void eng_arp(int on, int rate, int pat, int octs, float gate, float bpm);
+void eng_arp_notes(const float *pitch, const float *vel, int n);   /* the held notes, as played (n 0: none) */
+enum { CLK_TICK, CLK_START, CLK_STOP, CLK_CONT };
+void eng_clock(int what);                /* MIDI real time in: a clock tick (0xF8), START, STOP, CONTINUE */
+int eng_clock_ext(void);                 /* 1: the clock comes from outside (ticks within the last half second) */
+uint32_t eng_arp_steps(void);            /* steps played since the start (the screen, the tests) */
+float eng_arp_pitch(void);               /* the arp's last note (0: none yet) */
+
 /* for the screen and the tests */
 /* a write to the flash stops the sound for a moment: the app fades the output out first (and back in after) */
 void eng_duck(int on);
