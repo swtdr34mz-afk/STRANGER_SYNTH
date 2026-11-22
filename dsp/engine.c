@@ -50,8 +50,8 @@ const preset_t PRESETS[NPRESETS] = {
     {"SIX PAD", 7.0f, 1, 0.58f, 0.55f, 0.20f, 520.0f, 2.2f, 0.12f, 0.40f, {110, 95, 57, 50}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* the 101's arp bass: one pulse and the sub, squelchy; it starts on the arp, up and down */
     {"MONO ARP BASS", -12.0f, 1, 0.60f, 0.40f, 0.80f, 200.0f, 4.8f, 0.60f, 0.80f, {10, 10, 12, 35}, 0.0f, 0.0f, 0.0f, 0.0f, ARP_UPDOWN, 0, 0.0f, 0, 0},
-    /* an epic lead an octave up: resonant, wide, a long hall and a canyon behind it */
-    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.15f, 450.0f, 3.5f, 0.50f, 0.75f, {48, 70, 108, 80}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
+    /* an epic lead an octave up: resonant, wide, a hall behind it */
+    {"SYNC LEAD", 12.0f, 0, 0.50f, 0.55f, 0.15f, 450.0f, 3.5f, 0.50f, 0.75f, {48, 70, 62, 80}, 0.0f, 0.0f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
     /* a choir from tape: hollow pulses, slow, far away */
     {"MIRROR CHOIR", 12.0f, 1, 0.80f, 0.50f, 0.25f, 700.0f, 1.2f, 0.10f, 0.30f, {100, 115, 66, 45}, 0.0f, 0.04f, 0.0f, 0.0f, -1, 0, 0.0f, 0, 0},
 };

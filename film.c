@@ -703,18 +703,6 @@ static void film_frame(uint32_t now)
             cv_text(5, 18, &FONT_XS, t, RGB(200, 200, 210));
         }
     }
-    if (set.story) {                     /* the night's clock (a VCR's) */
-        int32_t mn = night_min(), h = (19 + mn / 60) % 24, mi = mn % 60;
-        char t[6];
-        t[0] = (char)('0' + h / 10);
-        t[1] = (char)('0' + h % 10);
-        t[2] = (film.frame & 16u) ? ':' : ' ';
-        t[3] = (char)('0' + mi / 10);
-        t[4] = (char)('0' + mi % 10);
-        t[5] = 0;
-        cv_rect(203, 2, 35, 14, RGB(4, 2, 4));
-        cv_text(206, 3, &FONT_XS, t, RGB(120, 255, 140));
-    }
     for (y = (int32_t)(film.frame & 3u); y < 120; y += 4)   /* scanlines, rolling slowly */
         px_dim_row(y);
     for (i = 0; i < 50u; i++)            /* grain */
