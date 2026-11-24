@@ -83,7 +83,23 @@ static void sc_tick(int start)           /* (arp_clock) a MIDI clock tick, or ST
 #include "heart.c"
 
 
-static inline int16_t tq(float x) { return (int16_t)(fm_clampf(x, -3.99f, 3.99f) * 8192.0f); }
+static inline int16_t tq(float x)
+{
+    float q = fm_clampf(x, -3.99f, 3.99f) * 8192.0f;
+    return (int16_t)(q < 0.0f ? q - 0.5f : q + 0.5f);   /* (rounded) */
+}
+/* down to 22,050 Hz: a half-band of 15 taps (stop band -32 dB), so the highs do not fold back into the tape (a
+ * plain average of two lets through what lies near 11 kHz, mirrored: grit when the tape plays back) */
+static float th_h[16];
+static uint32_t th_w;
+static inline float tape_half_band(void)
+{
+    uint32_t w = th_w;
+    return 0.5f * th_h[(w - 8u) & 15u] + 0.313926f * (th_h[(w - 7u) & 15u] + th_h[(w - 9u) & 15u])
+           - 0.093404f * (th_h[(w - 5u) & 15u] + th_h[(w - 11u) & 15u])
+           + 0.044110f * (th_h[(w - 3u) & 15u] + th_h[(w - 13u) & 15u])
+           - 0.026488f * (th_h[(w - 1u) & 15u] + th_h[(w - 15u) & 15u]);
+}
 static inline float tape_at(float pos)
 {
     uint32_t i0 = (uint32_t)pos, i1;
@@ -170,11 +186,12 @@ static inline void fx_sample(float *pl, float *pr)
     l += a;
     r += a;
     mono = 0.5f * (l + r);
+    th_h[th_w++ & 15u] = mono;
     FX.half ^= 1u;                       /* the tape records, always (22,050 Hz) */
     if (FX.half)
         FX.tacc = mono;
     else {
-        tape_buf[FX.tw] = tq(0.5f * (FX.tacc + mono));
+        tape_buf[FX.tw] = tq(tape_half_band());
         if (++FX.tw >= TAPE_N)
             FX.tw = 0;
     }
