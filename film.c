@@ -88,13 +88,16 @@ static uint32_t lit(uint32_t h) { return ui.win[h % NKEYS]; }   /* a light's key
 static float lvl01(void) { return fm_clampf(eng_level() * 1.6f, 0.0f, 1.0f); }
 
 /* ------------------------------------------------------------------ helpers --- */
-static void grad(int32_t y0, int32_t y1, uint16_t c0, uint16_t c1)   /* a sky: rows y0..y1-1, eased */
+static void grad(int32_t y0, int32_t y1, uint16_t c0, uint16_t c1)   /* a sky: rows y0..y1-1, eased, dithered (gfx2.c) */
 {
-    int32_t y, n = y1 - y0;
-    for (y = y0; y < y1; y++) {
-        uint32_t t = (uint32_t)((y - y0) * (y - y0)) * 256u / (uint32_t)(n * n);
-        cv_rect(0, y, 240, 1, mix565(c0, c1, t));
-    }
+    uint8_t a[3], b[3];
+    a[0] = (uint8_t)(((c0 >> 11) & 31u) * 255u / 31u);
+    a[1] = (uint8_t)(((c0 >> 5) & 63u) * 255u / 63u);
+    a[2] = (uint8_t)((c0 & 31u) * 255u / 31u);
+    b[0] = (uint8_t)(((c1 >> 11) & 31u) * 255u / 31u);
+    b[1] = (uint8_t)(((c1 >> 5) & 63u) * 255u / 63u);
+    b[2] = (uint8_t)((c1 & 31u) * 255u / 31u);
+    sgrad(y0, y1, a, b, 2.0f);
 }
 
 static void tri(int32_t cx, int32_t top, int32_t hw, int32_t h, uint16_t c)   /* a filled triangle, point up */
@@ -119,12 +122,22 @@ static void stars(int32_t y1, uint32_t seed)
 
 /* a cone of light from (x, y), its axis at angle a (turns: 0 right, 0.25 down), half-width s, length len */
 static void cone(int32_t x, int32_t y, float a, float s, int32_t len, uint16_t c, uint16_t bg)
-{
-    int32_t i;
-    for (i = -4; i <= 4; i++) {
-        float t = a + s * (float)i / 4.0f;
-        int32_t ex = x + (int32_t)(cos_turns(t) * (float)len), ey = y + (int32_t)(sin_t(t) * (float)len);
-        cv_line(x, y, ex, ey, mix565(c, bg, 120u + (uint32_t)(i < 0 ? -i : i) * 25u));
+{                                        /* (the facelift) a soft fan of light: added, fading along it and to its edges */
+    float ux = cos_turns(a), uy = sin_t(a), vx = -uy, vy = ux, k = 0.55f;
+    uint32_t r = ((c >> 11) & 31u) << 3, g = ((c >> 5) & 63u) << 2, b = (c & 31u) << 3;
+    int32_t i, j;
+    (void)bg;
+    for (i = 2; i < len; i++) {
+        float t = (float)i / (float)len, hw = 1.0f + (float)i * s * 6.2832f, fall = (1.0f - t) * k;
+        int32_t h = (int32_t)hw + 1;
+        for (j = -h; j <= h; j++) {
+            float e = 1.0f - fm_fabsf((float)j) / hw, q;
+            if (e <= 0.0f)
+                continue;
+            q = e * e * fall;
+            px_add(x + (int32_t)(ux * (float)i + vx * (float)j), y + (int32_t)(uy * (float)i + vy * (float)j),
+                   (uint32_t)((float)r * q), (uint32_t)((float)g * q), (uint32_t)((float)b * q));
+        }
     }
 }
 
@@ -385,6 +398,41 @@ static void film_frame(uint32_t now)
             cv_rect(2, 17, text_w(&FONT_XS, t) + 8, 14, RGB(4, 2, 4));
             cv_text(5, 18, &FONT_XS, t, RGB(200, 200, 210));
         }
+    }
+    {                                    /* the camcorder's viewfinder: the battery (no number) and the tape counter */
+        int b = plat_battery();
+        uint32_t s = plat_ms() / 1000u, k;
+        char t[16];
+        if (b >= 0 && !(b == 0 && (film.frame & 16u))) {   /* (empty: it blinks) */
+            int32_t bx = 212, by = 4;
+            uint16_t c = b == 0 ? RGB(255, 60, 50) : RGB(235, 235, 225);
+            cv_rect(bx + 1, by + 1, 21, 10, C_BLACK);          /* its shadow */
+            cv_rect(bx, by, 20, 9, c);                         /* the cell, its tip */
+            cv_rect(bx + 1, by + 1, 18, 7, C_BLACK);
+            cv_rect(bx + 20, by + 3, 2, 3, c);
+            if (b == 4) {                                      /* on USB power: a plug */
+                cv_rect(bx + 5, by + 4, 7, 2, c);
+                cv_rect(bx + 12, by + 2, 2, 5, c);
+                cv_rect(bx + 14, by + 3, 2, 1, c);
+                cv_rect(bx + 14, by + 5, 2, 1, c);
+            } else
+                for (k = 0; k < 3u; k++)
+                    cv_rect(bx + 2 + (int32_t)k * 6, by + 2, 5, 5, (int)k < b ? c : RGB(60, 60, 60));
+        }
+        t[0] = 'S';
+        t[1] = 'P';
+        t[2] = ' ';
+        t[3] = ' ';
+        t[4] = (char)('0' + s / 3600u % 10u);
+        t[5] = ':';
+        t[6] = (char)('0' + s / 600u % 6u);
+        t[7] = (char)('0' + s / 60u % 10u);
+        t[8] = ':';
+        t[9] = (char)('0' + s / 10u % 6u);
+        t[10] = (char)('0' + s % 10u);
+        t[11] = 0;
+        cv_text(6, 106, &FONT_XS, t, C_BLACK);
+        cv_text(5, 105, &FONT_XS, t, RGB(235, 235, 225));
     }
     for (y = (int32_t)(film.frame & 3u); y < 120; y += 4)   /* scanlines, rolling slowly */
         px_dim_row(y);

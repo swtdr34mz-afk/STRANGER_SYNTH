@@ -1678,6 +1678,8 @@ static uint16_t mix565(uint16_t a, uint16_t b, uint32_t t)   /* a .. b, t 0..256
                       ((ab + ((bb - ab) * tt >> 8)) & 31));
 }
 
+#include "gfx2.c"                        /* the smooth drawing: gradients, glows, soft lines, rings */
+
 /* rain, in Japanese (a neon sign): 13 x 10 */
 static const char *const KANJI_AME[10] = {
     "#############", "      #      ", "#############", "#     #     #", "#  #  #  #  #",
@@ -1714,10 +1716,14 @@ static void draw_head(void)
     int lit = !(film.flicker && (film.frame & 4u));
     int32_t x = 6;
     cv_begin(240, 24, C_BLACK);
-    cv_text(x + 1, 5, &FONT_B, "STRAN", RGB(110, 10, 10));
+    {                                    /* a glow round the neon: the word drawn soft and dim around itself */
+        static const int8_t O[8][2] = {{-2, 0}, {2, 0}, {0, -2}, {0, 2}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
+        uint32_t o;
+        for (o = 0; o < 8u; o++)
+            cv_text(x + O[o][0], 4 + O[o][1], &FONT_B, lit ? "STRANGER" : "STRAN", o < 4u ? RGB(50, 4, 6) : RGB(110, 10, 12));
+    }
     cv_text(x, 4, &FONT_B, "STRAN", C_RED);
     x += text_w(&FONT_B, "STRAN");
-    cv_text(x + 1, 5, &FONT_B, "GER", lit ? RGB(110, 10, 10) : C_BLACK);
     cv_text(x, 4, &FONT_B, "GER", lit ? C_RED : RGB(60, 20, 20));
     cv_text(80, 7, &FONT_XS, "HOLD", ui.drone ? C_AMBER : RGB(60, 50, 50));
     cv_text(110, 7, &FONT_XS, "LOW", ui.lowhold ? C_AMBER : RGB(60, 50, 50));
@@ -1734,38 +1740,54 @@ static void draw_head(void)
     cv_blit(0, 0);
 }
 
+/* a knob as a ring (the facelift): its track, the value lit in an arc with a soft glow, its sweetspots as dots around
+ * it, the number inside, the name above, the zone (or the value's text) below. x, y: its cell's top left, 54 wide */
+static void ring_knob(int32_t x, int32_t y, const char *name, int32_t v, int32_t lo, int32_t hi, const macro_t *mc,
+                      const char *below, int hot, int on_zone)
+{
+    float cx = (float)(x + 27), cy = (float)(y + 25), r = 11.0f, f = (float)(v - lo) / (float)(hi - lo > 0 ? hi - lo : 1),
+          a0 = 0.375f, a1 = 0.375f + 0.75f * f;
+    uint16_t lit = on_zone ? RGB(90, 220, 200) : RGB(255, 60, 50);
+    char t[8];
+    uint32_t i;
+    ctext(x + 27, y - 2, &FONT_XS, name, hot ? C_WHITE : RGB(150, 140, 150));
+    aa_arc(cx, cy, r, 3.0f, 0.375f, 1.125f, RGB(48, 26, 34), 256u);         /* the track */
+    if (f > 0.004f) {
+        aa_arc(cx, cy, r, 6.0f, a0, a1, mix565(lit, C_BLACK, 170), 150u);   /* its glow */
+        aa_arc(cx, cy, r, 2.6f, a0, a1, lit, 256u);
+        {                                /* the tip: a bright dot */
+            float ex = cx + fm_sin_turns(a1 + 0.25f) * r, ey = cy + fm_sin_turns(a1) * r;
+            aa_arc(ex, ey, 1.2f, 2.6f, 0.0f, 1.0f, RGB(255, 235, 225), 256u);
+        }
+    }
+    if (mc)                              /* the sweetspots: dots just outside the ring */
+        for (i = 0; i < mc->nzones; i++) {
+            float za = 0.375f + 0.75f * (float)mc->centre[i] / 127.0f;
+            int32_t px = (int32_t)(cx + fm_sin_turns(za + 0.25f) * (r + 5.0f) + 0.5f), py = (int32_t)(cy + fm_sin_turns(za) * (r + 5.0f) + 0.5f);
+            cv_rect(px, py, 1, 1, RGB(120, 100, 110));
+        }
+    int_text(v, t);
+    ctext(x + 27, y + 19, &FONT_XS, t, hot ? C_WHITE : RGB(255, 215, 190));
+    if (below)
+        ctext(x + 27, y + 37, &FONT_XS, below, on_zone ? RGB(90, 220, 200) : RGB(130, 115, 125));
+}
+
 static void draw_knob(int k, int32_t x, int32_t y, uint32_t now)
 {
     const macro_t *mc = &MACROS[k];
-    int32_t v = KM[k], w = 54, z = zone_at(mc, v), zn = zone_near(mc, v), fill = (v * (w - 2)) / 127;
-    uint32_t i;
+    int32_t v = KM[k], z = zone_at(mc, v), zn = zone_near(mc, v);
     int hot = ui.knob_at[k] && now - ui.knob_at[k] < 600u;
-    char t[8];
-    cv_text(x, y, &FONT_XS, mc->name, hot ? C_WHITE : RGB(140, 140, 160));
-    int_text(v, t);
-    cv_text(x + w - text_w(&FONT_XS, t), y, &FONT_XS, t, hot ? C_CYAN : C_AMBER);
-    cv_rect(x, y + 14, w, 8, RGB(50, 30, 60));
-    cv_rect(x + 1, y + 15, w - 2, 6, C_BLACK);
-    cv_rect(x + 1, y + 15, fill, 6, z >= 0 ? C_CYAN : C_MAG);
-    for (i = 0; i < mc->nzones; i++) {
-        int32_t tx = x + 1 + (mc->centre[i] * (w - 3)) / 127;
-        cv_rect(tx, y + 11, 1, 3, (int)i == z ? C_CYAN : RGB(110, 90, 120));
-    }
-    ctext(x + w / 2, y + 26, &FONT_XS, mc->zone[z >= 0 ? z : zn], z >= 0 ? C_WHITE : RGB(90, 80, 100));
+    ring_knob(x, y, mc->name, v, 0, 127, mc, mc->zone[z >= 0 ? z : zn], hot, z >= 0);
 }
 
 static void draw_pknob(int k, int32_t x, int32_t y, uint32_t now)   /* a page's knob: its name, its value */
 {
-    int32_t lo, hi, v = pk_get(ui.page, k), w = 54;
+    int32_t lo, hi, v = pk_get(ui.page, k);
     int hot = ui.knob_at[k] && now - ui.knob_at[k] < 600u;
     char t[16];
     pk_range(ui.page, k, &lo, &hi);
-    cv_text(x, y, &FONT_XS, PK_NAME[ui.page - 1][k], hot ? C_WHITE : RGB(140, 140, 160));
-    cv_rect(x, y + 14, w, 8, RGB(50, 30, 60));
-    cv_rect(x + 1, y + 15, w - 2, 6, C_BLACK);
-    cv_rect(x + 1, y + 15, (v - lo) * (w - 2) / (hi - lo > 0 ? hi - lo : 1), 6, hot ? C_CYAN : C_MAG);
     pk_text(ui.page, k, t);
-    ctext(x + w / 2, y + 26, &FONT_XS, t, hot ? C_CYAN : C_AMBER);
+    ring_knob(x, y, PK_NAME[ui.page - 1][k], v, lo, hi, 0, t, hot, 0);
 }
 
 static void draw_panel(void)
@@ -1781,11 +1803,8 @@ static void draw_panel(void)
         cv_text(6, 5, &FONT_B, "//", C_MAG);
         cv_text(28, 5, &FONT_B, PAGE_NAME[ui.page], C_AMBER);
     } else {
-        t[0] = '>';
-        t[1] = ' ';
-        t[2] = (char)('1' + set.preset);
-        t[3] = ' ';
-        t[4] = 0;
+        int_text((int32_t)set.preset + 1, t);
+        text_cat(t, " ");
         cv_text(6, 5, &FONT_B, t, C_MAG);
         cv_text(6 + text_w(&FONT_B, t), 5, &FONT_B, PR.name, C_AMBER);
     }
@@ -1844,7 +1863,7 @@ static void draw_panel(void)
         cv_blit(0, 144);
         return;
     }
-    cv_text(6, 80, &FONT_XS, t, RGB(40, 140, 150));
+    cv_text(6, 82, &FONT_XS, t, RGB(90, 220, 200));
     if (set.press != PRESS_OFF) {        /* the pressure: the hardest-pressed key */
         uint32_t k, pmax = 0;
         for (k = 0; k < NKEYS; k++)

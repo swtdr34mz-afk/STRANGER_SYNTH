@@ -41,6 +41,7 @@ static void st_lamp(int32_t x, int32_t i, uint32_t h)
         uint16_t lc = mix565(RGB(110, 90, 50), RGB(255, 230, 160), 80u + l * 2u / 3u);
         cv_rect(x + 6, GROUND - 38, 4, 2, lc);
         cone(x + 8, GROUND - 37, 0.25f, 0.06f, 44, mix565(lc, RGB(12, 10, 22), 150), RGB(12, 10, 22));
+        glow(x + 8, GROUND - 37, 12, 9, 255, 210, 140, 0.35f + (float)l / 600.0f);   /* the lamp's halo */
     }
 }
 static void scene_street(void)
@@ -93,9 +94,8 @@ static void scene_woods(void)
             uint32_t h = hsh(k, 77u);
             int32_t fx = (int32_t)(h % 230u) + 5, fy = 30 + (int32_t)((h >> 8) % 60u) + (int32_t)(fm_sin_turns((float)((film.frame + h) % 50u) / 50.0f) * 3.0f);
             uint16_t c = mix565(RGB(20, 40, 20), RGB(220, 255, 140), ui.win[k]);
+            glow(fx, fy, 5, 5, 200, 255, 120, (float)ui.win[k] / 400.0f);
             cv_rect(fx, fy, 2, 2, c);
-            if (ui.win[k] > 160u)
-                cv_rect(fx - 1, fy - 1, 4, 4, mix565(c, RGB(10, 30, 30), 160));
         }
     cone(30, 118, 0.80f + 0.05f * sw, 0.03f, 120, RGB(110, 110, 80), RGB(10, 20, 26));   /* two flashlights, searching */
     cone(210, 118, 0.70f - 0.06f * sw, 0.03f, 120, RGB(110, 110, 80), RGB(10, 20, 26));
@@ -153,40 +153,87 @@ static void scene_lab(void)
 }
 
 /* ======================================================================= ROAD === */
-static void rd_pole(int32_t x, int32_t i, uint32_t h)
+/* ROUTE 9: a flat country road at night, the horizon a black line of pines against a red glow, fog low in front of
+ * them, telephone poles running away into the distance, three kids on bikes, their lamps throwing soft beams */
+#define RD_TL 86                          /* the tree line's foot */
+#define RD_RD 90                          /* the road's far edge */
+static void rd_pines(void)               /* the tree line: pines of many heights, panning slowly */
 {
-    (void)i;
-    (void)h;
-    cv_rect(x, 20, 3, GROUND - 18, RGB(16, 6, 12));
-    cv_rect(x - 8, 24, 19, 2, RGB(16, 6, 12));
-    cv_line(x - 8, 25, x - 92, 30, RGB(30, 10, 20));
-    cv_line(x + 10, 25, x + 94, 30, RGB(30, 10, 20));
-}
-static void rd_field(int32_t x, int32_t i, uint32_t h)
-{
-    (void)i;
-    tri(x, GROUND - 14 - (int32_t)(h % 10u), 18 + (int32_t)(h % 12u), 16 + (int32_t)(h % 10u), RGB(24, 8, 20));
+    int32_t off = (int32_t)(film.sx * 0.15f), i = off / 6 - 2, x;
+    for (;; i++) {
+        uint32_t h = hsh((uint32_t)i, 91u);
+        int32_t ht = 8 + (int32_t)(h % 17u), hw = 3 + (int32_t)((h >> 5) % 4u), y;
+        x = i * 6 - off;
+        if (x - hw > 240)
+            break;
+        for (y = 0; y < ht; y++) {       /* a pine: narrow at the top, its branches in steps */
+            int32_t w = (y * hw) / ht + ((y & 3) == 3 ? 1 : 0);
+            cv_rect(x - w, RD_TL - ht + y, 2 * w + 1, 1, RGB(12, 4, 9));
+        }
+    }
+    cv_rect(0, RD_TL, 240, RD_RD - RD_TL, RGB(12, 4, 9));
 }
 static void scene_road(void)
 {
-    int32_t x, k;
-    grad(0, GROUND, RGB(10, 4, 20), RGB(150, 36, 40));
-    stars(30, 4);
-    for (k = 0; k < 24; k++)                                 /* the glow at the horizon */
-        cv_rect(40 + k * 2, GROUND - 24 + k, 160 - k * 4, 1, mix565(RGB(255, 110, 60), RGB(150, 36, 40), (uint32_t)(24 - k) * 10u));
-    layer(0.2f, 40, 9, 40, rd_field);
-    cv_rect(0, GROUND - 4, 240, 24, RGB(16, 6, 14));
-    for (x = -((int32_t)(film.sx * 2.0f) % 30); x < 240; x += 30)   /* the road rushing by */
-        cv_rect(x, GROUND + 10, 14, 2, RGB(120, 90, 60));
-    for (k = 0; k < 3; k++) {            /* three riders: their headlights are the keys */
+    static const uint8_t TOP[3] = {8, 3, 16}, LOW[3] = {170, 40, 34};
+    static const float POLE_X[5] = {26.0f, 92.0f, 144.0f, 184.0f, 214.0f}, POLE_S[5] = {1.0f, 0.75f, 0.58f, 0.46f, 0.38f};
+    int32_t x, k, i;
+    float px[5], py[5];
+    sgrad(0, RD_TL, TOP, LOW, 1.8f);
+    glow(120, RD_TL + 4, 96, 38, 255, 110, 60, 0.55f);       /* the glow behind the trees */
+    stars(40, 4);
+    for (k = 0; k < 9; k++) {                                /* clouds: soft, lit from below */
+        uint32_t h = hsh((uint32_t)k, 404u);
+        int32_t cx = (int32_t)((h % 300u + (uint32_t)(film.sx * 0.08f)) % 300u) - 30, cy = 8 + (int32_t)((h >> 9) % 50u);
+        soft_ellipse(cx, cy, 16 + (int32_t)((h >> 3) % 20u), 3 + (int32_t)((h >> 13) % 3u),
+                     mix565(RGB(70, 14, 20), RGB(150, 36, 34), (uint32_t)cy * 4u), 150u);
+    }
+    rd_pines();
+    for (k = 0; k < 7; k++) {                                /* fog drifting in front of the trees */
+        uint32_t h = hsh((uint32_t)k, 77u);
+        int32_t cx = (int32_t)((h % 320u + film.frame / 3u) % 320u) - 40;
+        soft_ellipse(cx, RD_TL - 1, 26 + (int32_t)(h % 24u), 4, RGB(120, 46, 46), 70u);
+    }
+    {                                                        /* the road: the sky's glow on its far side, darker near */
+        static const uint8_t FAR[3] = {74, 28, 30}, NEAR[3] = {18, 8, 13};
+        sgrad(RD_RD, 120, FAR, NEAR, 0.6f);
+    }
+    cv_rect(0, RD_RD, 240, 1, RGB(110, 44, 40));
+    for (x = -((int32_t)(film.sx * 2.0f) % 26); x < 240; x += 26)   /* its middle line, rushing by */
+        cv_rect(x, RD_RD + 12, 13, 2, RGB(160, 120, 70));
+    for (i = 0; i < 5; i++) {                                /* telephone poles, running away */
+        float s = POLE_S[i];
+        int32_t top = RD_RD - (int32_t)(78.0f * s), bw = s > 0.6f ? 2 : 1;
+        px[i] = POLE_X[i];
+        py[i] = (float)(top + (int32_t)(5.0f * s));
+        cv_rect((int32_t)POLE_X[i], top, bw, RD_RD - top, RGB(10, 3, 8));
+        cv_rect((int32_t)(POLE_X[i] - 9.0f * s), top + (int32_t)(4.0f * s), (int32_t)(20.0f * s) + 1, s > 0.6f ? 2 : 1, RGB(10, 3, 8));
+    }
+    for (i = 0; i + 1 < 5; i++) {                            /* the wires sagging between them */
+        int32_t w;
+        for (w = 0; w < 2; w++) {
+            float o0 = (w ? 9.0f : -8.0f) * POLE_S[i], o1 = (w ? 9.0f : -8.0f) * POLE_S[i + 1], lx = px[i] + o0, ly = py[i], t;
+            for (t = 0.1f; t < 1.01f; t += 0.1f) {
+                float nx = px[i] + o0 + (px[i + 1] + o1 - px[i] - o0) * t,
+                      ny = py[i] + (py[i + 1] - py[i]) * t + fm_sin_turns(t * 0.5f) * 5.0f * POLE_S[i];
+                aa_line(lx, ly, nx, ny, RGB(40, 12, 20), 230u);
+                lx = nx;
+                ly = ny;
+            }
+        }
+    }
+    for (k = 0; k < 3; k++) {            /* three riders on the road: their lamps are the keys */
         uint32_t l = 0, j;
+        int32_t bx = 70 + k * 48 + (int32_t)(fm_sin_turns((float)((film.frame + (uint32_t)k * 13u) % 90u) / 90.0f) * 4.0f),
+                by = RD_RD + 20 + (k == 1 ? -2 : k == 2 ? 1 : 0);
         for (j = (uint32_t)k; j < NKEYS; j += 3u)
             if (ui.win[j] > l)
                 l = ui.win[j];
-        bike(70 + k * 50 + (int32_t)(fm_sin_turns((float)((film.frame + (uint32_t)k * 13u) % 90u) / 90.0f) * 4.0f),
-             GROUND - 5 + (k & 1) * 2, 1, 60u + l * 3u / 4u, RGB(2, 2, 6));
+        beam(bx + 7, by - 7, 1, 56, 9, 255, 225, 165, 0.30f + 0.5f * (float)l / 255.0f);
+        bike(bx, by, 1, 0u, RGB(2, 1, 3));
+        glow(bx + 7, by - 7, 4, 4, 255, 240, 210, 0.8f);
+        cv_rect(bx + 6, by - 8, 2, 2, C_WHITE);
     }
-    layer(1.6f, 130, 10, 100, rd_pole);
 }
 
 /* ======================================================================= DOOR === */
@@ -208,6 +255,7 @@ static void scene_door(void)
     for (y = 0; y < dh; y++)                                 /* behind it: red, burning */
         cv_rect(dx + dw - open, dy + y, open, 1,
                 mix565(RGB(255, 120, 40), RGB(140, 10, 10), (uint32_t)y * 256u / (uint32_t)dh));
+    glow(dx + dw - open / 2, dy + dh / 2, 34 + open, 50, 255, 70, 30, 0.25f + 0.35f * lv);   /* the red light spilling */
     cv_rect(dx, dy, dw - open, dh, RGB(20, 12, 14));        /* the door, ajar */
     cv_rect(dx + dw - open - 6, dy + dh / 2, 3, 3, RGB(120, 100, 60));
     for (k = 0; k < NKEYS; k++)                             /* sparks drifting out: the keys */
@@ -276,6 +324,8 @@ static void scene_tower(void)
     }
     cv_line(tx, 14, tx - 18, GROUND, RGB(60, 64, 80));
     cv_line(tx, 14, tx + 18, GROUND, RGB(60, 64, 80));
+    if ((film.frame & 16u) || lvl01() > 0.3f)
+        glow(tx, 13, 9, 9, 255, 40, 30, 0.7f);
     cv_rect(tx - 1, 12, 3, 3, (film.frame & 16u) || lvl01() > 0.3f ? RGB(255, 40, 40) : RGB(60, 10, 10));
     cv_rect(0, GROUND, 240, 20, RGB(4, 8, 14));
     for (k = 0; k < 30u; k++)                               /* tall grass, swaying */
