@@ -1790,6 +1790,45 @@ static void draw_pknob(int k, int32_t x, int32_t y, uint32_t now)   /* a page's 
     ring_knob(x, y, PK_NAME[ui.page - 1][k], v, lo, hi, 0, t, hot, 0);
 }
 
+/* the battery, quiet in the panel's corner: a small rounded cell, its tip, three soft bars (no number); on USB power a
+ * plug instead; nearly empty the last bar red and slowly pulsing */
+static void draw_battery(int32_t x, int32_t y)
+{
+    int b = plat_battery();
+    uint16_t edge = RGB(96, 84, 92), fill = RGB(80, 190, 175), dark = RGB(30, 24, 30);
+    int32_t i;
+    if (b < 0)
+        return;
+    cv_rect(x + 1, y, 22, 1, edge);      /* the cell: rounded corners, half-lit */
+    cv_rect(x + 1, y + 9, 22, 1, edge);
+    cv_rect(x, y + 1, 1, 8, edge);
+    cv_rect(x + 23, y + 1, 1, 8, edge);
+    px_mix(x, y, edge, 100u);
+    px_mix(x + 23, y, edge, 100u);
+    px_mix(x, y + 9, edge, 100u);
+    px_mix(x + 23, y + 9, edge, 100u);
+    cv_rect(x + 24, y + 3, 2, 4, edge);  /* its tip */
+    px_mix(x + 25, y + 3, C_BLACK, 120u);
+    px_mix(x + 25, y + 6, C_BLACK, 120u);
+    if (b == 4) {                        /* on USB power: a small plug */
+        cv_rect(x + 6, y + 4, 7, 2, fill);
+        cv_rect(x + 13, y + 2, 3, 6, fill);
+        cv_rect(x + 16, y + 3, 3, 1, fill);
+        cv_rect(x + 16, y + 6, 3, 1, fill);
+        return;
+    }
+    for (i = 0; i < 3; i++) {
+        uint16_t c = i < b ? fill : dark;
+        if (b == 0 && i == 0)            /* nearly empty: the first bar red, breathing */
+            c = mix565(RGB(90, 20, 20), RGB(230, 50, 40), 128u + (uint32_t)(fm_sin_turns((float)(plat_ms() % 1600u) / 1600.0f) * 127.0f));
+        cv_rect(x + 2 + i * 7, y + 2, 6, 6, c);
+        px_mix(x + 2 + i * 7, y + 2, dark, 110u);   /* softened corners */
+        px_mix(x + 7 + i * 7, y + 2, dark, 110u);
+        px_mix(x + 2 + i * 7, y + 7, dark, 110u);
+        px_mix(x + 7 + i * 7, y + 7, dark, 110u);
+    }
+}
+
 static void draw_panel(void)
 {
     uint32_t now = plat_ms(), i;
@@ -1869,9 +1908,10 @@ static void draw_panel(void)
         for (k = 0; k < NKEYS; k++)
             if (ui.prs[k] > pmax)
                 pmax = ui.prs[k];
-        cv_rect(200, 82, 34, 6, RGB(50, 30, 60));
-        cv_rect(201, 83, (int32_t)(pmax * 32u / 127u), 4, C_MAG);
+        cv_rect(166, 86, 30, 4, RGB(40, 24, 34));
+        cv_rect(166, 86, (int32_t)(pmax * 30u / 127u), 4, RGB(150, 50, 60));
     }
+    draw_battery(206, 83);
     cv_blit(0, 144);
 }
 

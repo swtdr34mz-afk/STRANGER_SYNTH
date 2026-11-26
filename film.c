@@ -399,26 +399,9 @@ static void film_frame(uint32_t now)
             cv_text(5, 18, &FONT_XS, t, RGB(200, 200, 210));
         }
     }
-    {                                    /* the camcorder's viewfinder: the battery (no number) and the tape counter */
-        int b = plat_battery();
-        uint32_t s = plat_ms() / 1000u, k;
+    {                                    /* the camcorder's viewfinder: the tape counter */
+        uint32_t s = plat_ms() / 1000u;
         char t[16];
-        if (b >= 0 && !(b == 0 && (film.frame & 16u))) {   /* (empty: it blinks) */
-            int32_t bx = 212, by = 4;
-            uint16_t c = b == 0 ? RGB(255, 60, 50) : RGB(235, 235, 225);
-            cv_rect(bx + 1, by + 1, 21, 10, C_BLACK);          /* its shadow */
-            cv_rect(bx, by, 20, 9, c);                         /* the cell, its tip */
-            cv_rect(bx + 1, by + 1, 18, 7, C_BLACK);
-            cv_rect(bx + 20, by + 3, 2, 3, c);
-            if (b == 4) {                                      /* on USB power: a plug */
-                cv_rect(bx + 5, by + 4, 7, 2, c);
-                cv_rect(bx + 12, by + 2, 2, 5, c);
-                cv_rect(bx + 14, by + 3, 2, 1, c);
-                cv_rect(bx + 14, by + 5, 2, 1, c);
-            } else
-                for (k = 0; k < 3u; k++)
-                    cv_rect(bx + 2 + (int32_t)k * 6, by + 2, 5, 5, (int)k < b ? c : RGB(60, 60, 60));
-        }
         t[0] = 'S';
         t[1] = 'P';
         t[2] = ' ';

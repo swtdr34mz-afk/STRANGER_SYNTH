@@ -82,3 +82,5 @@ red door, soft beams for the headlights and flashlights, anti-aliased wires. ROU
 pines against the red glow, fog, telephone poles running away. A camcorder's viewfinder over the picture: the battery as
 a small cell with three bars (no number; a plug on USB power; it blinks when nearly empty) and the tape counter. The
 knobs as rings with their sweetspots, the title with a neon glow.
+
+(v0.8.1: the battery moved out of the picture into the panel's bottom right corner: a small, quiet cell with three soft bars.)
