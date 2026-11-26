@@ -75,7 +75,7 @@ release on a tag `v*`; the browser emulator goes to GitHub Pages.
 The sound engine is `dsp/engine.c` with `dsp/arp.c`, `dsp/perform.c` and `dsp/heart.c`; the screen is `film.c` with
 `scenes.c`; the controls and pages are `app.c`.
 
-## v0.8.0: the facelift
+## v0.9.0: the facelift
 
 Smoother pictures on the same 240 x 240 screen: skies without bands (dithered), soft glows round lamps, lights and the
 red door, soft beams for the headlights and flashlights, anti-aliased wires. ROUTE 9 redrawn: a flat road, a line of
