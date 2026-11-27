@@ -1794,7 +1794,11 @@ static void draw_pknob(int k, int32_t x, int32_t y, uint32_t now)   /* a page's 
  * plug instead; nearly empty the last bar red and slowly pulsing */
 static void draw_battery(int32_t x, int32_t y)
 {
+#ifdef __EMSCRIPTEN__
+    int b = 3;                           /* the browser has no battery: shown full (as the simulator), so it is seen */
+#else
     int b = plat_battery();
+#endif
     uint16_t edge = RGB(96, 84, 92), fill = RGB(80, 190, 175), dark = RGB(30, 24, 30);
     int32_t i;
     if (b < 0)
